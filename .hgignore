@@ -15,3 +15,7 @@ syntax: glob
 .swo
 *.pyc
 *.pyo
+
+# Compiled programs
+client-udp
+server-udp
