@@ -46,9 +46,9 @@ int main(int argc, char *argv[]) {
  
   printf("digite uma mensagem: \n"); 
   scanf(" %[^\n]",buffer);
-  bytes_sent = sendto(sock, buffer, strlen(buffer), 0, (struct sockaddr*)&addr, sizeof (struct sockaddr_in));
+  bytes_sent = sendto(sock, buffer, strlen(buffer), 0, (struct sockaddr*)&addr, sizeof(addr));
   if (bytes_sent < 0) {
-     printf("--Erro no recebimento \n");
+     printf("--Erro no envio\n");
   }
   close(sock); 
   return 0;

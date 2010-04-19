@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
   addr.sin_port = htons(atoi(argv[1]));
  
   // associa o descritor de socket com o endereco local
-  if (bind(sock,(struct sockaddr *)&addr, sizeof(struct sockaddr)) < 0) {
+  if (bind(sock,(struct sockaddr *)&addr, sizeof(addr)) < 0) {
     printf("--Exit com erro no bind \n");
     close(sock);
     exit(0);
@@ -57,4 +57,5 @@ int main(int argc, char *argv[]) {
     }
     printf("mensagem recebida: %s (%d bytes)\n",buffer,recsize);
   }
+  return 0;
 }
