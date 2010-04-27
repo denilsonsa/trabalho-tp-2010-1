@@ -45,7 +45,7 @@ void set_pointer(char ** cp, char * new_pointer)
 }
 
 
-int Pex_Set_Local_Port(int port)
+void Pex_Set_Local_Port(int port)
 {
 	// This function should be called BEFORE P_Activate_Request()
 	//
