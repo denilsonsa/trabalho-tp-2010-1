@@ -3,6 +3,9 @@
 #include <string.h>
 #include <malloc.h>
 
+#include <unistd.h>
+// close()
+
 #include <netinet/in.h>
 // typedef uint32_t in_addr_t;
 // struct in_addr
@@ -40,6 +43,7 @@ static int remote_port = 0;
 static int local_port = 0;
 static struct sockaddr_in local_addr;
 static struct sockaddr_in remote_addr;
+int socket_fd = -1;
 
 
 void set_pointer(void** cp, void* new_pointer)
@@ -54,11 +58,32 @@ void set_pointer(void** cp, void* new_pointer)
 	*cp = new_pointer;
 }
 
+void close_socket_fd()
+{
+	// Closes the socket, if there is a socket open, then sets it -1.
+	if( socket_fd > -1 )
+		close(socket_fd);
+	socket_fd = -1;
+}
+
+
+int fill_local_addr_struct()
+{
+	// Fills the local_addr global var using the values of other vars.
+	//
+	// Returns 1 in success, or ... well, it never fails!
+
+	local_addr.sin_addr.s_addr = INADDR_ANY;
+	local_addr.sin_port = htons(local_port);
+	local_addr.sin_family = AF_INET;
+	memset(local_addr.sin_zero, 0, sizeof local_addr.sin_zero);
+
+	return 1;
+}
 
 int fill_remote_addr_struct()
 {
-	// Fills the remote_addr global var using the values of the other
-	// global vars.
+	// Fills the remote_addr global var using the values of other vars.
 	//
 	// Returns 1 in success, or 0 in failure.
 
@@ -75,6 +100,7 @@ int fill_remote_addr_struct()
 	}
 	remote_addr.sin_port = htons(remote_port);
 	remote_addr.sin_family = AF_INET;
+	memset(local_addr.sin_zero, 0, sizeof local_addr.sin_zero);
 
 	return 1;
 
@@ -101,20 +127,36 @@ int P_Activate_Request(int port, char* host)
 	// modify and free it. This internal copy is automatically freed
 	// when needed.
 
+	close_socket_fd();
 	set_pointer((void*) &remote_host, strdup(host));
 	remote_port = port;
+	if( local_port == 0 )
+		local_port = remote_port;
 
 	if( ! fill_remote_addr_struct() )
 		return 0;
 
+	if( ! fill_local_addr_struct() )
+		return 0;
+
+	socket_fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	//socket_fd = socket(PF_INET, SOCK_DGRAM|SOCK_NONBLOCK, IPPROTO_UDP);
+	if( socket_fd < 0 )
+		return 0;
+
+	if( bind(socket_fd, (struct sockaddr*) &local_addr, sizeof local_addr) < 0 )
+	{
+		close_socket_fd();
+		return 0;
+	}
+
 	return 1;
-	// TODO: stub
 }
 
 void P_Deactivate_Request(void)
 {
-	set_pointer((void*) &remote_port, NULL);
-	// TODO: stub
+	close_socket_fd();
+	set_pointer((void*) &remote_host, NULL);
 }
 
 void P_Data_Request(char c)
