@@ -19,3 +19,4 @@ syntax: glob
 # Compiled programs
 client-udp
 server-udp
+fisica-teste
