@@ -18,7 +18,7 @@ LIBS = -lm
 #=====================================#
 
 PROGS = fisica-teste
-SRCS = fisica-teste.c fisica.c
+SRCS = fisica.c fisica-teste.c fisica-teste-args.c
 OBJS = $(SRCS:.c=.o)
 
 #Basic rules
@@ -31,12 +31,13 @@ clean:
 	done
 
 
-fisica-teste: fisica.o fisica-teste.o
+fisica-teste: $(OBJS)
 	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
 
 #Some implicit rules
 fisica.o: fisica.c fisica.h
-fisica-teste.o: fisica-teste.c fisica.c fisica.h
+fisica-teste.o: fisica-teste.c fisica.h fisica-teste-args.h
+fisica-teste-args.o: fisica-teste-args.c fisica-teste-args.h
 
 
 #Some header dependency
