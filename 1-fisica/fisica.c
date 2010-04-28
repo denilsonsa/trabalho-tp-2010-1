@@ -127,7 +127,13 @@ void Pex_Set_Local_Port(int port)
 	local_port = port;
 }
 
-void Pex_nbiocore_Callback(void)
+int Pex_Get_Socket_Fd(void)
+{
+	// Needed for select() in nbiocore
+	return socket_fd;
+}
+
+void Pex_Receive_Callback(int fd)
 {
 	// Callback for nbiocore call
 	struct sockaddr_in src_addr;

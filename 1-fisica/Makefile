@@ -18,7 +18,7 @@ LIBS = -lm
 #=====================================#
 
 PROGS = fisica-teste
-SRCS = fisica.c fisica-teste.c fisica-teste-args.c
+SRCS = fisica.c fisica-teste.c fisica-teste-args.c nbiocore.c
 OBJS = $(SRCS:.c=.o)
 
 #Basic rules
@@ -36,8 +36,9 @@ fisica-teste: $(OBJS)
 
 #Some implicit rules
 fisica.o: fisica.c fisica.h
-fisica-teste.o: fisica-teste.c fisica.h fisica-teste-args.h
+fisica-teste.o: fisica-teste.c fisica.h fisica-teste-args.h nbiocore.h
 fisica-teste-args.o: fisica-teste-args.c fisica-teste-args.h
+nbiocore.o: nbiocore.c nbiocore.h
 
 
 #Some header dependency

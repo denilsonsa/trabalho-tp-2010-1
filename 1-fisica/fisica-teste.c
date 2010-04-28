@@ -10,6 +10,8 @@
 #include "fisica.h"
 #include "fisica-teste-args.h"
 
+#include "nbiocore.h"
+
 
 static struct termios g_terminal_flags;
 
@@ -19,10 +21,34 @@ void restore_terminal_flags()
 }
 
 
+void read_from_stdin(int fd)
+{
+	int c;
+	c = getchar();
+
+	// 0x04 is EOT (end of transmission), which is received
+	// when the terminal is in non-canonical mode
+	if( c == EOF || c == 0x04 )
+		nbio_stop_loop();
+	else
+		P_Data_Request(c);
+}
+
+void read_from_network(int fd)
+{
+	Pex_Receive_Callback(fd);
+
+	while( P_Data_Indication() )
+	{
+		putchar(P_Data_Receive());
+	}
+	fflush(stdout);
+}
+
+
 int main(int argc, char* argv[])
 {
 	struct program_arguments args;
-	int i;
 
 	g_program_name = argv[0];
 	parse_arguments(argc, argv, &args);
@@ -57,22 +83,13 @@ int main(int argc, char* argv[])
 		tcsetattr(STDIN_FILENO, TCSANOW, &new_flags);
 	}
 
-	printf("Type 10 chars to be sent... ");
-	for(i=0; i<10; i++)
-	{
-		P_Data_Request(getchar());
-	}
-	printf("\nEnough sending! Time to receive 10 chars.\n");
-	for(i=0; i<10; i++)
-	{
-		while( !P_Data_Indication() )
-		{
-			sleep(1);
-			Pex_nbiocore_Callback();
-		}
-		putchar(P_Data_Receive());
-		fflush(stdout);
-	}
+	// The Non-Blocking I/O core, also called "N-B I/O"
+	nbio_register(STDIN_FILENO, read_from_stdin);
+	nbio_register(Pex_Get_Socket_Fd(), read_from_network);
+
+	printf("\"At your service.\" - Footman from Warcraft II\n");
+	nbio_loop();
+	printf("\nSo long, and thanks for all the fish!\n");
 
 	P_Deactivate_Request();
 
