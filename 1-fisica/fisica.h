@@ -6,3 +6,4 @@ char P_Data_Receive(void);
 
 // Extensions:
 void Pex_Set_Local_Port(int);
+void Pex_nbiocore_Callback(void);

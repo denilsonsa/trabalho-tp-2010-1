@@ -31,6 +31,7 @@
 
 #include <sys/socket.h>
 // bind()
+// sendto()
 
 #include <arpa/inet.h>
 // inet_aton()
@@ -45,6 +46,9 @@ static struct sockaddr_in local_addr;
 static struct sockaddr_in remote_addr;
 int socket_fd = -1;
 
+#define BUFFER_LEN 1
+char recv_buffer[BUFFER_LEN];
+int recv_buffer_has_data = 0;
 
 void set_pointer(void** cp, void* new_pointer)
 {
@@ -73,7 +77,8 @@ int fill_local_addr_struct()
 	//
 	// Returns 1 in success, or ... well, it never fails!
 
-	local_addr.sin_addr.s_addr = INADDR_ANY;
+	// htonl() is not really needed in this case
+	local_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	local_addr.sin_port = htons(local_port);
 	local_addr.sin_family = AF_INET;
 	memset(local_addr.sin_zero, 0, sizeof local_addr.sin_zero);
@@ -89,7 +94,10 @@ int fill_remote_addr_struct()
 
 	// If the remote host is empty, let's assume it's the loopback
 	if( remote_host[0] == '\0' )
-		remote_addr.sin_addr.s_addr = INADDR_LOOPBACK;
+	{
+		// htonl() is mandatory here
+		remote_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	}
 	else
 	{
 		if( ! inet_aton(remote_host, &remote_addr.sin_addr) )
@@ -118,6 +126,24 @@ void Pex_Set_Local_Port(int port)
 
 	local_port = port;
 }
+
+void Pex_nbiocore_Callback(void)
+{
+	// Callback for nbiocore call
+	struct sockaddr_in src_addr;
+	socklen_t src_addr_len;
+	int bytes_received;
+
+	bytes_received = recvfrom(socket_fd, recv_buffer, BUFFER_LEN, 0,
+		(struct sockaddr*) &src_addr, &src_addr_len);
+
+	if( bytes_received > 0 )
+		recv_buffer_has_data = 1;
+
+	// ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags,
+	//   struct sockaddr *src_addr, socklen_t *addrlen);
+}
+
 
 int P_Activate_Request(int port, char* host)
 {
@@ -161,18 +187,25 @@ void P_Deactivate_Request(void)
 
 void P_Data_Request(char c)
 {
-	// TODO: stub
+	int bytes_sent;
+
+	bytes_sent = sendto(socket_fd, &c, 1, 0, (struct sockaddr*) &remote_addr, sizeof remote_addr);
+
+	// ssize_t sendto(int sockfd, const void *buf, size_t len, int flags,
+	//   const struct sockaddr *dest_addr, socklen_t addrlen);
 }
 
 int P_Data_Indication(void)
 {
-	// TODO: stub
-	return 0;
+	if( recv_buffer_has_data )
+		return 1;
+	else
+		return 0;
 }
 
 char P_Data_Receive(void)
 {
-	// TODO: stub
-	return 'F';
+	recv_buffer_has_data = 0;
+	return recv_buffer[0];
 }
 
