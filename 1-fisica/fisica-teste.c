@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
 
 	printf("\"At your service.\" - Footman from Warcraft II\n");
 	nbio_loop();
-	printf("\nSo long, and thanks for all the fish!\n");
+	printf("\n\"So long, and thanks for all the fish!\" - Dolphins from Hitchhiker's Guide to the Galaxy\n");
 
 	P_Deactivate_Request();
 

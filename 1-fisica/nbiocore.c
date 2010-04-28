@@ -64,19 +64,18 @@ void nbio_unregister(int fd)
 	list_len--;
 }
 
-void nbio_set_timeout(int seconds)
-{
-	// How long to wait?
-	// Set negative to "forever"
-	nbio_timeout_seconds = seconds;
-}
-
-void nbio_register_idle(nbio_callback_t func)
+void nbio_register_idle(int timeout_seconds, nbio_callback_t func)
 {
 	// The function that will be called after the timeout, if nothing
 	// was available for reading.
 	// The function will be called with -1 as parameter;
-	// Register a NULL pointer to disable the idle function.
+	//
+	// Set negative timeout to mean "wait forever".
+	//
+	// Essentially, passing either a negative timeout or a NULL function
+	// will disable this feature.
+
+	nbio_timeout_seconds = timeout_seconds;
 	nbio_idle_callback = func;
 }
 

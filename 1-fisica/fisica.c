@@ -140,7 +140,7 @@ void Pex_Receive_Callback(int fd)
 	socklen_t src_addr_len;
 	int bytes_received;
 
-	bytes_received = recvfrom(socket_fd, recv_buffer, BUFFER_LEN, 0,
+	bytes_received = recvfrom(fd, recv_buffer, BUFFER_LEN, 0,
 		(struct sockaddr*) &src_addr, &src_addr_len);
 
 	if( bytes_received > 0 )

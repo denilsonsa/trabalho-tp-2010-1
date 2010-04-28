@@ -26,9 +26,7 @@ OBJS = $(SRCS:.c=.o)
 all: $(PROGS)
 
 clean:
-	for a in $(OBJS) $(PROGS); do \
-		rm -f $$a ; \
-	done
+	rm -f $(OBJS) $(PROGS)
 
 
 fisica-teste: $(OBJS)
