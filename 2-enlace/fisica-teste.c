@@ -99,6 +99,7 @@ int main(int argc, char* argv[])
 	printf("\n\"So long, and thanks for all the fish!\" - Dolphins from Hitchhiker's Guide to the Galaxy\n");
 
 	P_Deactivate_Request(PS);
+	free_physical_state(PS);
 
 	return 0;
 }

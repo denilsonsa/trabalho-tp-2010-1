@@ -38,21 +38,6 @@
 // inet_addr()
 
 
-// Global variables (for current state)
-/*
-static char* remote_host = NULL;
-static int remote_port = 0;
-static int local_port = 0;
-static struct sockaddr_in local_addr;
-static struct sockaddr_in remote_addr;
-int socket_fd = -1;
-
-#define BUFFER_LEN 1
-char recv_buffer[BUFFER_LEN];
-int recv_buffer_has_data = 0;
-*/
-
-
 void set_pointer(void** cp, void* new_pointer)
 {
 	// This function frees the (*cp), if it is not null, and then make
