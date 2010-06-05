@@ -1,0 +1,19 @@
+Author: Denilson Figueiredo de Sá
+
+== Compilation ==
+
+Just run 'make'.
+
+It has been tested under Linux with gcc-4.3.4, and compiles with no warnings.
+
+
+== Running ==
+
+Run without parameters to print the built-in help:
+  ./fisica-teste
+
+Run these two commands at different terminals at the same machine:
+  ./fisica-teste 1234 :1235
+  ./fisica-teste 1235 :1234
+
+For details, read fisica-relat.pdf (in Portuguese).
