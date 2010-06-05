@@ -6,7 +6,7 @@
 #Standard variables:
 CC  = gcc
 CXX = g++
-CFLAGS   = -Wall -pipe $(DEBUGFLAGS)
+CFLAGS   = -Wall -pipe -I./lib/ $(DEBUGFLAGS)
 CXXFLAGS = $(CFLAGS)
 LDFLAGS  =
 LIBS = -lm
@@ -17,9 +17,14 @@ LIBS = -lm
 #  No need to change below this line  #
 #=====================================#
 
-PROGS = fisica-teste
-SRCS = fisica.c fisica-teste.c fisica-teste-args.c nbiocore.c
-OBJS = $(SRCS:.c=.o)
+PROGS = src/fisica-teste
+
+LIBSRCS = lib/fisica.c lib/nbiocore.c
+PROGSRCS = src/fisica-teste.c src/fisica-teste-args.c 
+
+LIBOBJS = $(LIBSRCS:.c=.o)
+PROGOBJS = $(PROGSRCS:.c=.o)
+OBJS = $(LIBOBJS) $(PROGOBJS)
 
 #Basic rules
 .PHONY: all clean
@@ -29,19 +34,16 @@ clean:
 	rm -f $(OBJS) $(PROGS)
 
 
-fisica-teste: $(OBJS)
+src/fisica-teste: $(LIBOBJS) src/fisica-teste.o src/fisica-teste-args.o
 	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
 
 #Some implicit rules
-fisica.o: fisica.c fisica.h
-fisica-teste.o: fisica-teste.c fisica.h fisica-teste-args.h nbiocore.h
-fisica-teste-args.o: fisica-teste-args.c fisica-teste-args.h
-nbiocore.o: nbiocore.c nbiocore.h
+lib/fisica.o: lib/fisica.c lib/fisica.h
+lib/nbiocore.o: lib/nbiocore.c lib/nbiocore.h
 
+src/fisica-teste.o: src/fisica-teste.c src/fisica-teste-args.h lib/fisica.h lib/nbiocore.h
+src/fisica-teste-args.o: src/fisica-teste-args.c src/fisica-teste-args.h
 
-#Some header dependency
-#main.o: common.h tileset.h
-#tileset.o: tileset.h
 
 
 #The variables:
