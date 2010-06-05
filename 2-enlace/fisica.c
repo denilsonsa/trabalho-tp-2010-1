@@ -39,6 +39,7 @@
 
 
 // Global variables (for current state)
+/*
 static char* remote_host = NULL;
 static int remote_port = 0;
 static int local_port = 0;
@@ -49,6 +50,8 @@ int socket_fd = -1;
 #define BUFFER_LEN 1
 char recv_buffer[BUFFER_LEN];
 int recv_buffer_has_data = 0;
+*/
+
 
 void set_pointer(void** cp, void* new_pointer)
 {
@@ -56,59 +59,82 @@ void set_pointer(void** cp, void* new_pointer)
 	// it point to the new_pointer
 
 	if( !cp )
-		return;  // Passed with wrong parameter...
+		return;  // Called with wrong parameter...
 	if( *cp )
 		free(*cp);
 	*cp = new_pointer;
 }
 
-void close_socket_fd()
+void close_socket_fd(physical_state_t* PS)
 {
 	// Closes the socket, if there is a socket open, then sets it -1.
-	if( socket_fd > -1 )
-		close(socket_fd);
-	socket_fd = -1;
+	if( PS->socket_fd > -1 )
+		close(PS->socket_fd);
+	PS->socket_fd = -1;
+}
+
+physical_state_t* malloc_physical_state()
+{
+	physical_state_t* PS;
+	PS = malloc(sizeof(physical_state_t));
+	if(PS)
+	{
+		PS->remote_host = NULL;
+		PS->remote_port = 0;
+		PS->local_port = 0;
+		PS->socket_fd = -1;
+		PS->recv_buffer_has_data = 0;
+	}
+	return PS;
+}
+
+void free_physical_state(physical_state_t* PS)
+{
+	set_pointer((void*) &(PS->remote_host), NULL);
+	free(PS);
 }
 
 
-int fill_local_addr_struct()
+int fill_local_addr_struct(physical_state_t* PS)
 {
-	// Fills the local_addr global var using the values of other vars.
+	// Fills the local_addr struct using the values of other vars.
 	//
 	// Returns 1 in success, or ... well, it never fails!
 
 	// htonl() is not really needed in this case
-	local_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	local_addr.sin_port = htons(local_port);
-	local_addr.sin_family = AF_INET;
-	memset(local_addr.sin_zero, 0, sizeof local_addr.sin_zero);
+	PS->local_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	PS->local_addr.sin_port = htons(PS->local_port);
+	PS->local_addr.sin_family = AF_INET;
+
+	memset(PS->local_addr.sin_zero, 0, sizeof PS->local_addr.sin_zero);
 
 	return 1;
 }
 
-int fill_remote_addr_struct()
+int fill_remote_addr_struct(physical_state_t* PS)
 {
-	// Fills the remote_addr global var using the values of other vars.
+	// Fills the remote_addr struct using the values of other vars.
 	//
 	// Returns 1 in success, or 0 in failure.
 
 	// If the remote host is empty, let's assume it's the loopback
-	if( remote_host[0] == '\0' )
+	if( PS->remote_host[0] == '\0' )
 	{
 		// htonl() is mandatory here
-		remote_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+		PS->remote_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	}
 	else
 	{
-		if( ! inet_aton(remote_host, &remote_addr.sin_addr) )
+		if( ! inet_aton(PS->remote_host, &(PS->remote_addr.sin_addr)) )
 		{
 			// Invalid address
 			return 0;
 		}
 	}
-	remote_addr.sin_port = htons(remote_port);
-	remote_addr.sin_family = AF_INET;
-	memset(local_addr.sin_zero, 0, sizeof local_addr.sin_zero);
+	PS->remote_addr.sin_port = htons(PS->remote_port);
+	PS->remote_addr.sin_family = AF_INET;
+
+	memset(PS->remote_addr.sin_zero, 0, sizeof PS->remote_addr.sin_zero);
 
 	return 1;
 
@@ -117,101 +143,104 @@ int fill_remote_addr_struct()
 }
 
 
-void Pex_Set_Local_Port(int port)
-{
-	// This function should be called BEFORE P_Activate_Request()
-	//
-	// Setting the local port to zero will make P_Activate_Request() use
-	// the same port as the destination one.
-
-	local_port = port;
-}
-
-int Pex_Get_Socket_Fd(void)
-{
-	// Needed for select() in nbiocore
-	return socket_fd;
-}
-
-void Pex_Receive_Callback(int fd)
+void Pex_Receive_Callback(physical_state_t* PS)
 {
 	// Callback for nbiocore call
 	struct sockaddr_in src_addr;
 	socklen_t src_addr_len;
 	int bytes_received;
 
-	bytes_received = recvfrom(fd, recv_buffer, BUFFER_LEN, 0,
+	bytes_received = recvfrom(PS->socket_fd,
+		PS->recv_buffer, sizeof(PS->recv_buffer), 0,
 		(struct sockaddr*) &src_addr, &src_addr_len);
 
 	if( bytes_received > 0 )
-		recv_buffer_has_data = 1;
+		PS->recv_buffer_has_data = 1;
 
 	// ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags,
 	//   struct sockaddr *src_addr, socklen_t *addrlen);
 }
 
 
-int P_Activate_Request(int port, char* host)
+physical_state_t* P_Activate_Request(int remote_port, char* host, int local_port)
 {
-	// Returns 1 in success, or 0 in failure.
+	// Returns a new physical_state_t struct in success, or NULL in failure.
 	//
 	// The "host" string is duplicated here, so the caller is free to
-	// modify and free it. This internal copy is automatically freed
-	// when needed.
+	// modify and free it. This copy is automatically freed on free_physical_state().
+	//
+	// If the local_port is zero, then it will use the remote_port value instead.
 
-	close_socket_fd();
-	set_pointer((void*) &remote_host, strdup(host));
-	remote_port = port;
-	if( local_port == 0 )
-		local_port = remote_port;
+	physical_state_t* PS;
+	PS = malloc_physical_state();
+	if( ! PS )
+		return NULL;
 
-	if( ! fill_remote_addr_struct() )
-		return 0;
+	close_socket_fd(PS);
+	set_pointer((void*) &(PS->remote_host), strdup(host));
+	PS->remote_port = remote_port;
+	PS->local_port = local_port;
 
-	if( ! fill_local_addr_struct() )
-		return 0;
+	if( PS->local_port == 0 )
+		PS->local_port = PS->remote_port;
 
-	socket_fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	//socket_fd = socket(PF_INET, SOCK_DGRAM|SOCK_NONBLOCK, IPPROTO_UDP);
-	if( socket_fd < 0 )
-		return 0;
-
-	if( bind(socket_fd, (struct sockaddr*) &local_addr, sizeof local_addr) < 0 )
+	if( ! fill_remote_addr_struct(PS) )
 	{
-		close_socket_fd();
-		return 0;
+		free_physical_state(PS);
+		return NULL;
 	}
 
-	return 1;
+	if( ! fill_local_addr_struct(PS) )
+	{
+		free_physical_state(PS);
+		return NULL;
+	}
+
+	PS->socket_fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	//socket_fd = socket(PF_INET, SOCK_DGRAM|SOCK_NONBLOCK, IPPROTO_UDP);
+	if( PS->socket_fd < 0 )
+	{
+		free_physical_state(PS);
+		return NULL;
+	}
+
+	if( bind(PS->socket_fd, (struct sockaddr*) &(PS->local_addr), sizeof PS->local_addr) < 0 )
+	{
+		close_socket_fd(PS);
+		free_physical_state(PS);
+		return NULL;
+	}
+
+	return PS;
 }
 
-void P_Deactivate_Request(void)
+void P_Deactivate_Request(physical_state_t* PS)
 {
-	close_socket_fd();
-	set_pointer((void*) &remote_host, NULL);
+	close_socket_fd(PS);
+	set_pointer((void*) &(PS->remote_host), NULL);
 }
 
-void P_Data_Request(char c)
+void P_Data_Request(physical_state_t* PS, char c)
 {
 	int bytes_sent;
 
-	bytes_sent = sendto(socket_fd, &c, 1, 0, (struct sockaddr*) &remote_addr, sizeof remote_addr);
+	bytes_sent = sendto(PS->socket_fd, &c, 1, 0, (struct sockaddr*) &(PS->remote_addr), sizeof PS->remote_addr);
 
 	// ssize_t sendto(int sockfd, const void *buf, size_t len, int flags,
 	//   const struct sockaddr *dest_addr, socklen_t addrlen);
 }
 
-int P_Data_Indication(void)
+int P_Data_Indication(physical_state_t* PS)
 {
-	if( recv_buffer_has_data )
+	if( PS->recv_buffer_has_data )
 		return 1;
 	else
 		return 0;
 }
 
-char P_Data_Receive(void)
+char P_Data_Receive(physical_state_t* PS)
 {
-	recv_buffer_has_data = 0;
-	return recv_buffer[0];
+	PS->recv_buffer_has_data = 0;
+	return PS->recv_buffer[0];
 }
 

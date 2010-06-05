@@ -13,7 +13,14 @@
 #include "nbiocore.h"
 
 
+// Global vars:
+
+// Only one physical connection
+static physical_state_t* PS;
+
+// Terminal flags before setting the non-canonical mode
 static struct termios g_terminal_flags;
+
 
 void restore_terminal_flags()
 {
@@ -31,16 +38,16 @@ void read_from_stdin(int fd)
 	if( c == EOF || c == 0x04 )
 		nbio_stop_loop();
 	else
-		P_Data_Request(c);
+		P_Data_Request(PS, c);
 }
 
 void read_from_network(int fd)
 {
-	Pex_Receive_Callback(fd);
+	Pex_Receive_Callback(PS);
 
-	while( P_Data_Indication() )
+	while( P_Data_Indication(PS) )
 	{
-		putchar(P_Data_Receive());
+		putchar(P_Data_Receive(PS));
 	}
 	fflush(stdout);
 }
@@ -57,8 +64,8 @@ int main(int argc, char* argv[])
 	//printf("remote_host: %s\n", args.remote_host);
 	//printf("remote_port: %d\n", args.remote_port);
 
-	Pex_Set_Local_Port(args.local_port);
-	if( ! P_Activate_Request(args.remote_port, args.remote_host) )
+	PS = P_Activate_Request(args.remote_port, args.remote_host, args.local_port);
+	if( !PS )
 	{
 		printf("I'm really sorry to tell you that P_Activate_Request failed to activate your request.\n");
 		return 1;
@@ -85,13 +92,13 @@ int main(int argc, char* argv[])
 
 	// The Non-Blocking I/O core, also called "N-B I/O"
 	nbio_register(STDIN_FILENO, read_from_stdin);
-	nbio_register(Pex_Get_Socket_Fd(), read_from_network);
+	nbio_register(PS->socket_fd, read_from_network);
 
 	printf("\"At your service.\" - Footman from Warcraft II\n");
 	nbio_loop();
 	printf("\n\"So long, and thanks for all the fish!\" - Dolphins from Hitchhiker's Guide to the Galaxy\n");
 
-	P_Deactivate_Request();
+	P_Deactivate_Request(PS);
 
 	return 0;
 }
