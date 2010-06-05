@@ -13,11 +13,6 @@
 #include "nbiocore.h"
 
 
-// Global vars:
-
-// Only one physical connection
-static physical_state_t* PS;
-
 // Terminal flags before setting the non-canonical mode
 static struct termios g_terminal_flags;
 
@@ -28,7 +23,7 @@ void restore_terminal_flags()
 }
 
 
-void read_from_stdin(int fd)
+void read_from_stdin(int fd, void* PS)
 {
 	int c;
 	c = getchar();
@@ -41,7 +36,7 @@ void read_from_stdin(int fd)
 		P_Data_Request(PS, c);
 }
 
-void read_from_network(int fd)
+void read_from_network(int fd, void* PS)
 {
 	Pex_Receive_Callback(PS);
 
@@ -56,6 +51,7 @@ void read_from_network(int fd)
 int main(int argc, char* argv[])
 {
 	struct program_arguments args;
+	physical_state_t* PS;
 
 	g_program_name = argv[0];
 	parse_arguments(argc, argv, &args);
@@ -91,8 +87,8 @@ int main(int argc, char* argv[])
 	}
 
 	// The Non-Blocking I/O core, also called "N-B I/O"
-	nbio_register(STDIN_FILENO, read_from_stdin);
-	nbio_register(PS->socket_fd, read_from_network);
+	nbio_register(STDIN_FILENO, read_from_stdin, PS);
+	nbio_register(PS->socket_fd, read_from_network, PS);
 
 	printf("\"At your service.\" - Footman from Warcraft II\n");
 	nbio_loop();

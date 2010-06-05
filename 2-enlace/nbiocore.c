@@ -9,44 +9,53 @@ static int nbio_loop_alive = 1;
 static int nbio_timeout_seconds = 1;
 static nbio_callback_t nbio_idle_callback = NULL;
 
+
+// Internal structure to store the registered callbacks
+typedef struct nbio_list_item
+{
+	int fd;
+	nbio_callback_t callback;
+	void* user_data;
+} nbio_list_item_t;
+
 #define MAX_LIST_LEN 256
-static int list_fd[MAX_LIST_LEN];
-static nbio_callback_t list_callback[MAX_LIST_LEN];
-static int list_len;
+static nbio_list_item_t nbio_list[MAX_LIST_LEN];
+static int nbio_list_len = 0;
 
 
 int find_max_fd()
 {
 	// Undefined result if the list is empty
 	int i;
-	int m;
+	int max_fd;
 
-	m = list_fd[0];
-	for(i=1; i < list_len; i++)
+	max_fd = nbio_list[0].fd;
+	for(i=1; i < nbio_list_len; i++)
 	{
-		if( list_fd[i] > m )
-			m = list_fd[i];
+		if( nbio_list[i].fd > max_fd )
+			max_fd = nbio_list[i].fd;
 	}
-	return m;
+	return max_fd;
 }
 
 int find_index_by_fd(int fd)
 {
 	int i;
-	for(i=0; i < list_len; i++)
+	for(i=0; i < nbio_list_len; i++)
 	{
-		if( list_fd[i] == fd )
+		if( nbio_list[i].fd == fd )
 			return i;
 	}
 	return -1;
 }
 
 
-void nbio_register(int fd, nbio_callback_t func)
+void nbio_register(int fd, nbio_callback_t func, void* user_data)
 {
-	list_fd[list_len] = fd;
-	list_callback[list_len] = func;
-	list_len++;
+	nbio_list[nbio_list_len].fd = fd;
+	nbio_list[nbio_list_len].callback = func;
+	nbio_list[nbio_list_len].user_data = user_data;
+	nbio_list_len++;
 }
 
 void nbio_unregister(int fd)
@@ -59,9 +68,8 @@ void nbio_unregister(int fd)
 
 	// After finding the element, we swap the last one with the
 	// soon-to-be-deleted element, and then we decrease the list size.
-	list_fd[old] = list_fd[list_len];
-	list_callback[old] = list_callback[list_len];
-	list_len--;
+	nbio_list[old] = nbio_list[nbio_list_len];
+	nbio_list_len--;
 }
 
 void nbio_register_idle(int timeout_seconds, nbio_callback_t func)
@@ -107,8 +115,8 @@ void nbio_loop()
 
 		// Preparing the set...
 		FD_ZERO(&read_set);
-		for(i=0; i < list_len; i++)
-			FD_SET(list_fd[i], &read_set);
+		for(i=0; i < nbio_list_len; i++)
+			FD_SET(nbio_list[i].fd, &read_set);
 		max_fd = find_max_fd();
 
 		// Running select()
@@ -117,15 +125,15 @@ void nbio_loop()
 		if( retval < 1 )
 		{
 			if( nbio_idle_callback )
-				nbio_idle_callback(-1);
+				nbio_idle_callback(-1, NULL);
 		}
 		else
 		{
 			// Finding the returned FDs
-			for(i=0; i < list_len; i++)
+			for(i=0; i < nbio_list_len; i++)
 			{
-				if( FD_ISSET(list_fd[i], &read_set) )
-					list_callback[i](list_fd[i]);
+				if( FD_ISSET(nbio_list[i].fd, &read_set) )
+					nbio_list[i].callback(nbio_list[i].fd, nbio_list[i].user_data);
 			}
 		}
 	}
