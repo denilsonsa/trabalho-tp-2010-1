@@ -1,21 +1,16 @@
 #include <stdio.h>
-#include <stdlib.h>
 
-#include <termios.h>
-// tcsetattr(), tcgetattr(), TCSANOW, ICANON, struct termios
+#include <stdlib.h>
+// atoi(), exit()
 
 #include <unistd.h>
 // STDIN_FILENO, sleep()
 
 #include "fisica.h"
 #include "nbiocore.h"
+#include "terminal.h"
 #include "util.h"
 
-
-// Global vars:
-
-// Terminal flags before setting the non-canonical mode
-static struct termios g_terminal_flags;
 
 // Program name, used in print_help()
 char* g_program_name;
@@ -81,12 +76,6 @@ void parse_arguments(int argc, char* argv[], struct program_arguments* args)
 }
 
 
-void restore_terminal_flags()
-{
-	tcsetattr(STDIN_FILENO, TCSANOW, &g_terminal_flags);
-}
-
-
 void read_from_stdin(int fd, void* PS)
 {
 	int c;
@@ -131,24 +120,8 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	// Setting unbuffered stdout
-	//setvbuf(stdout, NULL, _IONBF, 0);
-
-	// Setting unbuffered stdin (but this doesn't quite work)
-	//setvbuf(stdin, NULL, _IONBF, 0);
-
-	// Changing terminal settings for non-canonical mode
-	// (i.e. disables line-editing and line-buffering)
-	// http://stackoverflow.com/questions/1798511/how-to-avoid-press-enter-with-any-getchar/1798833#1798833
-	if( tcgetattr(STDIN_FILENO, &g_terminal_flags) == 0)
-	{
-		struct termios new_flags;
-
-		atexit(restore_terminal_flags);	
-		new_flags = g_terminal_flags;
-		new_flags.c_lflag &= ~(ICANON); 
-		tcsetattr(STDIN_FILENO, TCSANOW, &new_flags);
-	}
+	// Set the terminal to non-canonical mode
+	set_terminal_flags();
 
 	// The Non-Blocking I/O core, also called "N-B I/O"
 	nbio_register(STDIN_FILENO, read_from_stdin, PS);

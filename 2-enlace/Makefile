@@ -19,7 +19,7 @@ LIBS = -lm
 
 PROGS = fisica-teste
 
-LIBSRCS = lib/fisica.c lib/nbiocore.c lib/util.c
+LIBSRCS = lib/fisica.c lib/nbiocore.c lib/terminal.c lib/util.c
 PROGSRCS = src/fisica-teste.c
 
 LIBOBJS = $(LIBSRCS:.c=.o)
@@ -47,10 +47,10 @@ lib/util.o: lib/util.c lib/util.h
 
 
 src/fisica-teste.o: src/fisica-teste.c \
-	lib/fisica.h lib/nbiocore.h lib/util.h
+	lib/fisica.h lib/nbiocore.h lib/terminal.h lib/util.h
 
 fisica-teste: src/fisica-teste.o \
-	lib/fisica.o lib/nbiocore.o lib/util.o
+	lib/fisica.o lib/nbiocore.o lib/terminal.o lib/util.o
 
 	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
 
