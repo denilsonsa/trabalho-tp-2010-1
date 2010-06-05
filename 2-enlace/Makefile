@@ -17,7 +17,7 @@ LIBS = -lm
 #  No need to change below this line  #
 #=====================================#
 
-PROGS = src/fisica-teste
+PROGS = fisica-teste
 
 LIBSRCS = lib/fisica.c lib/nbiocore.c
 PROGSRCS = src/fisica-teste.c src/fisica-teste-args.c 
@@ -26,7 +26,9 @@ LIBOBJS = $(LIBSRCS:.c=.o)
 PROGOBJS = $(PROGSRCS:.c=.o)
 OBJS = $(LIBOBJS) $(PROGOBJS)
 
-#Basic rules
+############################################################
+# Basic rules
+
 .PHONY: all clean
 all: $(PROGS)
 
@@ -34,16 +36,32 @@ clean:
 	rm -f $(OBJS) $(PROGS)
 
 
-src/fisica-teste: $(LIBOBJS) src/fisica-teste.o src/fisica-teste-args.o
+############################################################
+# Dependency of the main programs
+
+fisica-teste: \
+	lib/fisica.o lib/nbiocore.o \
+	src/fisica-teste.o src/fisica-teste-args.o
+
 	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
 
-#Some implicit rules
+
+############################################################
+# Some implicit rules to describe all the dependencies
+
 lib/fisica.o: lib/fisica.c lib/fisica.h
+
 lib/nbiocore.o: lib/nbiocore.c lib/nbiocore.h
 
-src/fisica-teste.o: src/fisica-teste.c src/fisica-teste-args.h lib/fisica.h lib/nbiocore.h
-src/fisica-teste-args.o: src/fisica-teste-args.c src/fisica-teste-args.h
+src/fisica-teste.o: \
+	lib/fisica.h lib/nbiocore.h \
+	src/fisica-teste.c src/fisica-teste-args.h
 
+src/fisica-teste-args.o: \
+	src/fisica-teste-args.c src/fisica-teste-args.h
+
+
+# Done!
 
 
 #The variables:
