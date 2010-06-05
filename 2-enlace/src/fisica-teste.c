@@ -8,13 +8,77 @@
 // STDIN_FILENO, sleep()
 
 #include "fisica.h"
-#include "fisica-teste-args.h"
-
 #include "nbiocore.h"
+#include "util.h"
 
+
+// Global vars:
 
 // Terminal flags before setting the non-canonical mode
 static struct termios g_terminal_flags;
+
+// Program name, used in print_help()
+char* g_program_name;
+
+
+struct program_arguments
+{
+	int local_port;
+	int remote_port;
+	char* remote_host;
+};
+
+
+void print_help()
+{
+	printf(
+		"Possible command-lines:\n"
+		"  %s <remote host>:<port>\n"
+		"  %s <local port> <remote host>:<port>\n"
+		"If the remote host is empty, it is a shortcut for the loopback address:\n"
+		"  %s <local port> :<port>\n",
+		g_program_name,
+		g_program_name,
+		g_program_name 
+	);
+}
+
+
+void parse_arguments(int argc, char* argv[], struct program_arguments* args)
+{
+	int error = 0;
+
+	if( argc == 2 )
+	{
+		// progname host:port
+		args->local_port = 0;
+		if(! split_host_port( argv[1], &(args->remote_host), &(args->remote_port) ) )
+			error = 1;
+		if( args->remote_port == 0 )
+			error = 1;
+	}
+	else if( argc == 3 )
+	{
+		// progname localport host:port
+		args->local_port = atoi(argv[1]);
+		if(! split_host_port( argv[2], &(args->remote_host), &(args->remote_port) ) )
+			error = 1;
+		if( args->local_port == 0 )
+			error = 1;
+		if( args->remote_port == 0 )
+			error = 1;
+	}
+	else
+	{
+		print_help();
+		exit(1);
+	}
+	if( error == 1 )
+	{
+		printf("Error parsing parameters. (pass no parameters for help)\n");
+		exit(1);
+	}
+}
 
 
 void restore_terminal_flags()

@@ -1,5 +1,8 @@
 #include "fisica.h"
 
+#include "util.h"
+// set_pointer()
+
 #include <string.h>
 #include <malloc.h>
 
@@ -37,18 +40,6 @@
 // inet_aton()
 // inet_addr()
 
-
-void set_pointer(void** cp, void* new_pointer)
-{
-	// This function frees the (*cp), if it is not null, and then make
-	// it point to the new_pointer
-
-	if( !cp )
-		return;  // Called with wrong parameter...
-	if( *cp )
-		free(*cp);
-	*cp = new_pointer;
-}
 
 void close_socket_fd(physical_state_t* PS)
 {

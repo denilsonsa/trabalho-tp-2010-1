@@ -1,9 +1,10 @@
+#include "nbiocore.h"
+
 #include <stdlib.h>
 // Just for the 'NULL'
 
 #include <sys/select.h>
 
-#include "nbiocore.h"
 
 static int nbio_loop_alive = 1;
 static int nbio_timeout_seconds = 1;
