@@ -17,10 +17,16 @@ LIBS = -lm
 #  No need to change below this line  #
 #=====================================#
 
-PROGS = fisica-hub fisica-teste
+PROGS = \
+	fisica-teste fisica-hub \
+	enlace-teste
 
-LIBSRCS = lib/fisica.c lib/nbiocore.c lib/terminal.c lib/util.c
-PROGSRCS = src/fisica-hub.c src/fisica-teste.c
+PROGSRCS = \
+	src/fisica-teste.c src/fisica-hub.c \
+	src/enlace-teste.c
+
+LIBSRCS = lib/fisica.c lib/enlace.c \
+	lib/nbiocore.c lib/terminal.c lib/util.c
 
 LIBOBJS = $(LIBSRCS:.c=.o)
 PROGOBJS = $(PROGSRCS:.c=.o)
@@ -41,6 +47,9 @@ clean:
 lib/fisica.o: lib/fisica.c lib/fisica.h \
 	lib/util.h
 
+lib/enlace.o: lib/enlace.c lib/enlace.h \
+	lib/fisica.h
+
 lib/nbiocore.o: lib/nbiocore.c lib/nbiocore.h
 
 lib/util.o: lib/util.c lib/util.h
@@ -58,6 +67,13 @@ src/fisica-hub.o: src/fisica-hub.c \
 
 fisica-hub: src/fisica-hub.o \
 	lib/fisica.o lib/nbiocore.o lib/terminal.o lib/util.o
+
+
+src/enlace-teste.o: src/enlace-teste.c \
+	lib/enlace.h lib/fisica.h lib/nbiocore.h lib/util.h
+
+enlace-teste: src/enlace-teste.o \
+	lib/enlace.o lib/fisica.o lib/nbiocore.o lib/util.o
 
 
 ############################################################
