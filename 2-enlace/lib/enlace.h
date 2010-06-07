@@ -7,6 +7,12 @@
 
 typedef unsigned char link_address_t;
 
+enum has_frame_state_t {
+	NO,
+	HEADER_OK,
+	YES
+};
+
 // The data link layer struct
 typedef struct link_state
 {
@@ -16,6 +22,8 @@ typedef struct link_state
 	unsigned char recv_buffer[LINK_BUFFER_LEN];
 	int recv_buffer_begin;
 	int recv_buffer_end;
+
+	enum has_frame_state_t recv_buffer_has_frame;
 } link_state_t;
 
 link_state_t* malloc_link_state();
@@ -25,6 +33,7 @@ void free_link_state(link_state_t*);
 link_state_t* L_Activate_Request(link_state_t*, link_address_t, physical_state_t*);
 void L_Deactivate_Request(link_state_t*);
 void L_Data_Request(link_state_t*, link_address_t, const char*, int);
+int L_Data_Indication(link_state_t*);
 
 void L_Receive_Callback(link_state_t*);
 

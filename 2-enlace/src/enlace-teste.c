@@ -108,6 +108,10 @@ void read_from_stdin(int fd, void* LS)
 void read_from_network(int fd, void* LS)
 {
 	L_Receive_Callback(LS);
+	if( L_Data_Indication(LS) ) // This should be a while()
+	{
+		printf("Hey, I have a frame available!\n");
+	}
 	// TODO: put here code to check if there a frame available and to
 	// receive that frame.
 }
@@ -138,7 +142,7 @@ int main(int argc, char* argv[])
 
 	// The Non-Blocking I/O core, also called "N-B I/O"
 	nbio_register(STDIN_FILENO, read_from_stdin, LS);
-	nbio_register(PS->socket_fd, read_from_network, PS);
+	nbio_register(PS->socket_fd, read_from_network, LS);
 
 	printf("\"Ready to work.\" - Peon from Warcraft II\n");
 	nbio_loop();
