@@ -4,7 +4,9 @@
 // set_pointer()
 
 #include <string.h>
-#include <malloc.h>
+
+#include <stdlib.h>
+// NULL, malloc(), free()
 
 #include <unistd.h>
 // close()
@@ -49,6 +51,15 @@ void close_socket_fd(physical_state_t* PS)
 	PS->socket_fd = -1;
 }
 
+physical_state_t* malloc_physical_state()
+{
+	physical_state_t* PS;
+	PS = malloc(sizeof(physical_state_t));
+	if(PS)
+		clear_physical_state(PS);
+	return PS;
+}
+
 void clear_physical_state(physical_state_t* PS)
 {
 	// This function fills a physical_state_t struct with "NULL" data.
@@ -64,15 +75,6 @@ void clear_physical_state(physical_state_t* PS)
 	PS->local_port = 0;
 	PS->socket_fd = -1;
 	PS->recv_buffer_has_data = 0;
-}
-
-physical_state_t* malloc_physical_state()
-{
-	physical_state_t* PS;
-	PS = malloc(sizeof(physical_state_t));
-	if(PS)
-		clear_physical_state(PS);
-	return PS;
 }
 
 void free_physical_state(physical_state_t* PS)
@@ -155,7 +157,8 @@ physical_state_t* P_Activate_Request(physical_state_t* PS, int remote_port, cons
 	// If NULL is passed, then this function will malloc() a new
 	// physical_state_t struct and return that.
 	//
-	// This function will PS or the new struct in success, or NULL in failure.
+	// This function will return PS or the new struct on success,
+	// or NULL upon failure.
 	//
 	// The "host" string is duplicated here, so the caller is free to
 	// modify and free it. This copy is automatically freed on free_physical_state().

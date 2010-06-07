@@ -1,3 +1,6 @@
+#ifndef HAS_FISICA_H
+#define HAS_FISICA_H
+
 #include <netinet/in.h>
 
 // This code will not work with length different than 1
@@ -30,3 +33,4 @@ char P_Data_Receive(physical_state_t*);
 // Extensions:
 void Pex_Receive_Callback(physical_state_t*);
 
+#endif
