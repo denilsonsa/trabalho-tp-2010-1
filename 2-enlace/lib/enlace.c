@@ -2,7 +2,7 @@
 #include "fisica.h"
 
 #include <stdlib.h>
-// NULL, malloc(), free()
+// NULL, malloc(), free(), rand(), RAND_MAX
 
 #include <stdio.h>
 // For error messages
@@ -25,6 +25,7 @@ void clear_link_state(link_state_t* LS)
 	LS->recv_buffer_begin = 0;
 	LS->recv_buffer_end = 0;
 	LS->recv_buffer_has_frame = NO;
+	LS->loss_probability = 0.0;
 }
 
 void free_link_state(link_state_t* LS)
@@ -60,10 +61,16 @@ link_state_t* L_Activate_Request(link_state_t* LS, link_address_t local_addr, ph
 	LS->recv_buffer_begin = 0;
 	LS->recv_buffer_end = 0;
 	LS->recv_buffer_has_frame = NO;
+	LS->loss_probability = 0.0;
 
 	return LS;
 }
 
+
+void L_Set_Loss_Probability(link_state_t* LS, float chance)
+{
+	LS->loss_probability = chance;
+}
 
 void L_Set_Promiscuous(link_state_t* LS, int promiscuous)
 {
@@ -241,8 +248,21 @@ void L_Analyze_Buffer(link_state_t* LS)
 								|| header.dst_addr == LINK_ADDRESS_BROADCAST
 								|| header.dst_addr == LS->local_addr )
 								{
-									LS->recv_buffer_has_frame = YES;
-									break;
+									// All the work so far...
+									// 9-levels deep in conditionals...
+									// And still there is a chance of
+									// simulating a frame loss.
+									if( rand() < RAND_MAX * LS->loss_probability )
+									{
+										printf("Frame lost due to probability.\n");
+										LS->recv_buffer_has_frame = NO;
+										LS->recv_buffer_begin = (LS->recv_buffer_begin + 7-1 + header.payload_len) % LINK_BUFFER_LEN;
+									}
+									else
+									{
+										LS->recv_buffer_has_frame = YES;
+										break;
+									}
 								}
 								else
 								{

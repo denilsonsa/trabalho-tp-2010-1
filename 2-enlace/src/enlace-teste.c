@@ -3,7 +3,10 @@
 #include <string.h>
 
 #include <stdlib.h>
-// atoi(), exit()
+// atoi(), exit(), srand()
+
+#include <time.h>
+// time()
 
 #include <unistd.h>
 // STDIN_FILENO, sleep()
@@ -145,6 +148,11 @@ int main(int argc, char* argv[])
 		printf("Noooooo! L_Activate_Request failed to activate your request.\n");
 		return 1;
 	}
+
+	//L_Set_Promiscuous(LS, 1);
+
+	L_Set_Loss_Probability(LS, 0.0);
+	srand(time(NULL));
 
 	// The Non-Blocking I/O core, also called "N-B I/O"
 	nbio_register(STDIN_FILENO, read_from_stdin, LS);

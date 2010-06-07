@@ -28,6 +28,7 @@ typedef struct link_state
 	int recv_buffer_end;
 
 	enum has_frame_state_t recv_buffer_has_frame;
+	float loss_probability;
 } link_state_t;
 
 link_state_t* malloc_link_state();
@@ -40,6 +41,7 @@ void L_Data_Request(link_state_t*, link_address_t, const char*, int);
 int L_Data_Indication(link_state_t*);
 int L_Data_Receive(link_state_t*, link_address_t*, link_address_t*, char*, int);
 
+void L_Set_Loss_Probability(link_state_t*, float);
 void L_Set_Promiscuous(link_state_t*, int);
 void L_Receive_Callback(link_state_t*);
 
