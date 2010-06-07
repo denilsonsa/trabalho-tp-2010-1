@@ -21,9 +21,10 @@ void clear_link_state(link_state_t* LS)
 {
 	LS->local_addr = 0;
 	LS->PS = NULL;
+	LS->promiscuous = 0;
 	LS->recv_buffer_begin = 0;
 	LS->recv_buffer_end = 0;
-	LS->recv_buffer_has_frame = 0;
+	LS->recv_buffer_has_frame = NO;
 }
 
 void free_link_state(link_state_t* LS)
@@ -55,11 +56,21 @@ link_state_t* L_Activate_Request(link_state_t* LS, link_address_t local_addr, ph
 
 	LS->local_addr = local_addr;
 	LS->PS = PS;
+	LS->promiscuous = 0;
 	LS->recv_buffer_begin = 0;
 	LS->recv_buffer_end = 0;
-	LS->recv_buffer_has_frame = 0;
+	LS->recv_buffer_has_frame = NO;
 
 	return LS;
+}
+
+
+void L_Set_Promiscuous(link_state_t* LS, int promiscuous)
+{
+	if( promiscuous )
+		LS->promiscuous = 1;
+	else
+		LS->promiscuous = 0;
 }
 
 
@@ -110,7 +121,7 @@ void L_Data_Request(link_state_t* LS, link_address_t dest_addr, const char* buf,
 
 typedef struct link_frame_header {
 	link_address_t src_addr;
-	link_address_t dest_addr;
+	link_address_t dst_addr;
 	unsigned char payload_len;
 	unsigned char payload_checksum;
 	unsigned char header_checksum;
@@ -119,7 +130,7 @@ typedef struct link_frame_header {
 void parse_header(link_state_t* LS, link_frame_header_t* header)
 {
 	header->src_addr = BUF(1);
-	header->dest_addr = BUF(2);
+	header->dst_addr = BUF(2);
 	header->payload_len = BUF(3);
 	header->payload_checksum = BUF(4);
 	header->header_checksum = BUF(5);
@@ -172,7 +183,7 @@ void L_Analyze_Buffer(link_state_t* LS)
 					// Let's check the header!
 					if( header.header_checksum
 					!= ( header.src_addr
-						^ header.dest_addr
+						^ header.dst_addr
 						^ header.payload_len
 						^ header.payload_checksum )
 					)
@@ -225,8 +236,20 @@ void L_Analyze_Buffer(link_state_t* LS)
 							else
 							{
 								// Congratulations! You've got a frame!
-								LS->recv_buffer_has_frame = YES;
-								break;
+								// But... Is it for you?
+								if( LS->promiscuous
+								|| header.dst_addr == LINK_ADDRESS_BROADCAST
+								|| header.dst_addr == LS->local_addr )
+								{
+									LS->recv_buffer_has_frame = YES;
+									break;
+								}
+								else
+								{
+									printf("This frame is for '%c', and not for me.\n", header.dst_addr);
+									LS->recv_buffer_has_frame = NO;
+									LS->recv_buffer_begin = (LS->recv_buffer_begin + 7-1 + header.payload_len) % LINK_BUFFER_LEN;
+								}
 							}
 						}
 					}
@@ -236,7 +259,7 @@ void L_Analyze_Buffer(link_state_t* LS)
 		else
 		{
 			// Just garbage. Let's ignore it.
-			printf("Ignoring garbage '%c'...\n", c);
+			//printf("Ignoring garbage '%c'...\n", c);
 		}
 
 		// Removing the first byte from the buffer.
@@ -250,7 +273,7 @@ void L_Receive_Callback(link_state_t* LS)
 	// Runs the physical layer callback,
 	// and then gets the byte from the physical layer into the link layer.
 
-	Pex_Receive_Callback(LS->PS);
+	P_Receive_Callback(LS->PS);
 
 	while( P_Data_Indication(LS->PS) )
 	{
@@ -269,7 +292,7 @@ void L_Receive_Callback(link_state_t* LS)
 		{
 			// Well, the buffer is not full. Let's store that byte!
 			c = P_Data_Receive(LS->PS);
-			printf("Storing '%c'...\n", c);
+			//printf("Storing '%c'...\n", c);
 			LS->recv_buffer[ LS->recv_buffer_end ] = c;
 			LS->recv_buffer_end = next_pos;
 		}
@@ -287,3 +310,42 @@ int L_Data_Indication(link_state_t* LS)
 		return 0;
 }
 
+int L_Data_Receive(link_state_t* LS, link_address_t* src, link_address_t* dst, char* buf, int buf_len)
+{
+	// src will receive the src address.
+	// dst will receive the destination address.
+	// buf will receive the data.
+	// buf_len is the size of buf.
+	//
+	// src and dst are optional (pass NULL in that case).
+	//
+	// Returns the number of bytes stored in buf, or returns -1 in case of
+	// failure, or if buf_len is not long enough.
+
+	int i;
+	link_frame_header_t header;
+
+	parse_header(LS, &header);
+
+	if( buf_len < header.payload_len )
+		// Buffer not long enough.
+		return -1;
+	if( ! buf )
+		// Huh... Sanity check.
+		return -1;
+
+	if( src )
+		*src = header.src_addr;
+	if( dst )
+		*dst = header.dst_addr;
+
+	for(i=0; i<header.payload_len; i++)
+	{
+		buf[i] = BUF(6+i);
+	}
+
+	LS->recv_buffer_has_frame = NO;
+	LS->recv_buffer_begin = (LS->recv_buffer_begin + 7 + header.payload_len) % LINK_BUFFER_LEN;
+
+	return header.payload_len;
+}

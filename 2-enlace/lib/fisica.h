@@ -30,7 +30,6 @@ void P_Data_Request(physical_state_t*, char);
 int P_Data_Indication(physical_state_t*);
 char P_Data_Receive(physical_state_t*);
 
-// Extensions:
-void Pex_Receive_Callback(physical_state_t*);
+void P_Receive_Callback(physical_state_t*);
 
 #endif

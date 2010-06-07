@@ -116,7 +116,7 @@ void read_from_network(int fd, void* void_conn)
 	
 	conn = (struct physical_connection*) void_conn;
 
-	Pex_Receive_Callback(&conn->PS);
+	P_Receive_Callback(&conn->PS);
 	//printf("read_from_network(%d, %p);\n", fd, void_conn);
 
 	while( P_Data_Indication(&conn->PS) )

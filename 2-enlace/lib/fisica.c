@@ -132,7 +132,7 @@ int fill_remote_addr_struct(physical_state_t* PS)
 }
 
 
-void Pex_Receive_Callback(physical_state_t* PS)
+void P_Receive_Callback(physical_state_t* PS)
 {
 	// Callback for nbiocore call
 	struct sockaddr_in src_addr;

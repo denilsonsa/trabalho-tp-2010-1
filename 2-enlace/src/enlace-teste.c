@@ -108,12 +108,18 @@ void read_from_stdin(int fd, void* LS)
 void read_from_network(int fd, void* LS)
 {
 	L_Receive_Callback(LS);
-	if( L_Data_Indication(LS) ) // This should be a while()
+	while( L_Data_Indication(LS) ) // This should be a while()
 	{
-		printf("Hey, I have a frame available!\n");
+		link_address_t src;
+		link_address_t dst;
+		char buf[512];
+		int len;
+
+		len = L_Data_Receive(LS, &src, &dst, buf, 512);
+		printf("Got a frame of size %d from '%c' to '%c':\n", len, src, dst);
+		fwrite(buf, 1, len, stdout);
+		fflush(stdout);
 	}
-	// TODO: put here code to check if there a frame available and to
-	// receive that frame.
 }
 
 

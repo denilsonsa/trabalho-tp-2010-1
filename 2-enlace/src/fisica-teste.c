@@ -92,7 +92,7 @@ void read_from_stdin(int fd, void* PS)
 
 void read_from_network(int fd, void* PS)
 {
-	Pex_Receive_Callback(PS);
+	P_Receive_Callback(PS);
 
 	while( P_Data_Indication(PS) )
 	{
