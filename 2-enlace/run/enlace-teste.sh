@@ -2,8 +2,8 @@
 
 source run/common.sh
 
-echo "Simple test with two hosts directly connected to each other."
-echo "(plus a physical hub just to sniffer the traffic)"
+echo "Simple test with three hosts connected to each other using a physical hub."
+echo "(plus a physical-layer client just to sniffer and tamper with the traffic)"
 
 run ./fisica-teste   10001 :11001
 run ./enlace-teste a 10002 :11002
