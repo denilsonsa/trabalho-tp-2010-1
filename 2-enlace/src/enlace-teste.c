@@ -105,18 +105,11 @@ void read_from_stdin(int fd, void* LS)
 		nbio_stop_loop();
 }
 
-void read_from_network(int fd, void* PS)
+void read_from_network(int fd, void* LS)
 {
-	Pex_Receive_Callback(PS);
-
-	// TODO: Do something here at the Link Layer
-	/*
-	while( P_Data_Indication(PS) )
-	{
-		putchar(P_Data_Receive(PS));
-	}
-	fflush(stdout);
-	*/
+	L_Receive_Callback(LS);
+	// TODO: put here code to check if there a frame available and to
+	// receive that frame.
 }
 
 

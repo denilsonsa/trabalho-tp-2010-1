@@ -74,6 +74,11 @@ void L_Data_Request(link_state_t* LS, link_address_t dest_addr, const char* buf,
 		// I can't send... nothing!
 		return;
 
+	if( buf_len > 255 )
+		// Sorry, but any data beyond the maximum payload size is
+		// silently discarded.
+		buf_len = 255;
+
 	payload_checksum = 0;
 	for(i=0; i<buf_len; i++)
 	{
@@ -91,4 +96,33 @@ void L_Data_Request(link_state_t* LS, link_address_t dest_addr, const char* buf,
 	for(i=0; i<buf_len; i++)
 		P_Data_Request(LS->PS, buf[i]);  // The payload data
 	P_Data_Request(LS->PS, '#');  // End of frame marker
+}
+
+
+void L_TODO_RENAME_ME(link_state_t* LS)
+{
+	// Looks at the link layer buffer and looks for a frame.
+}
+
+
+void L_Receive_Callback(link_state_t* LS)
+{
+	// Runs the physical layer callback,
+	// and then gets the byte from the physical layer into the link layer.
+
+	Pex_Receive_Callback(LS->PS);
+
+	while( P_Data_Indication(LS->PS) )
+	{
+		char c;
+		c = P_Data_Receive(LS->PS);
+		LS->recv_buffer[ LS->recv_buffer_end ] = c;
+
+		LS->recv_buffer_end++;
+		LS->recv_buffer_end %= LINK_BUFFER_LEN;
+
+		// WARNING! There is no buffer overflow checking!
+	}
+
+	L_TODO_RENAME_ME(LS);
 }

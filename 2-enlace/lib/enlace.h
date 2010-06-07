@@ -26,4 +26,6 @@ link_state_t* L_Activate_Request(link_state_t*, link_address_t, physical_state_t
 void L_Deactivate_Request(link_state_t*);
 void L_Data_Request(link_state_t*, link_address_t, const char*, int);
 
+void L_Receive_Callback(link_state_t*);
+
 #endif
