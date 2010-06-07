@@ -1,28 +1,81 @@
 Author: Denilson Figueiredo de Sá
 
+
 == Compiling ==
 
 Just run 'make'.
 
-All code shared between multiple programs is inside the "lib/"
-directory. The source code for each program is inside "src/" directory.
-For convenience, running "make" will build the final executable at the
-package root directory (the same dir where Makefile is located).
+For convenience, all executables will be saved at the package root
+directory (the same dir where the Makefile is located).
 
-The code has been tested under Linux with gcc-4.4.3, and compiles with
-no warnings.
+The code has been tested under Gentoo/Linux x86_64, with gcc-4.4.3, and
+compiles with no warnings.
 
 
 == Running ==
 
-Run without parameters to print the built-in help:
+For each compiled program, run it without parameters to print the
+built-in help.
+
   ./fisica-teste
+  # will print built-in help
 
-Run these two commands at different terminals at the same machine:
-  ./fisica-teste 1234 :1235
-  ./fisica-teste 1235 :1234
+In order to test each program, you usually need to run multiple
+instances at the same time, each one in a different terminal. With the
+intention of simplifying testing, there are some handy scripts at the
+"run/" directory.
 
-For details, read fisica-relat.pdf (in Portuguese).
+Thus, just run:
+  ./run/fisica-teste.sh
+  # or any other script from that directory
+
+Those scripts use 'xterm' as the terminal. If you don't have 'xterm, you
+can either install it, or edit "run/common.sh" to point to the terminal
+of your preference.
+
+Of course, you are free to manually run each program without using the
+scripts. You can also run each program on a different machine, just pass
+the correct parameters so they will find each other.
 
 
-/* vi: set tw=72: */
+== Directories ==
+
+lib/
+  All code shared between multiple programs is inside this directory.
+
+src/
+  Each program has its source here.
+
+run/
+  Handy scripts for running common test cases. These scripts open
+  multiple "xterm" windows, one for each program instance.
+
+
+== Network-related files ==
+
+lib/fisica.*
+  Implements a physical layer on top of UDP sockets.
+
+lib/enlace.*
+  Implements the link layer.
+
+
+== Auxiliar files ==
+
+lib/nbiocore.*
+  Non-blocking I/O core. Makes it easier to use "select()" system call,
+  by registering callback functions for each file descriptor to be read.
+
+  (now that I think about it... only input is handled, thus it should
+  have been called NBI core)
+
+lib/terminal.*
+  Code that changes the terminal flags, in order to set non-canonical
+  mode (unbuffered, per-character input).
+
+lib/util.*
+  Small, simple and handy functions that might be used in multiple
+  places.
+
+
+/* vi: set tw=72 spell spelllang=en: */
