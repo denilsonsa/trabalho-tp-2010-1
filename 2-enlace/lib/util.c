@@ -20,7 +20,7 @@ void set_pointer(void** cp, void* new_pointer)
 }
 
 
-int split_host_port(char* input, char** host, int* port)
+int split_host_port(const char* input, char** host, int* port)
 {
 	// This function receives a host IP and a port (like these:
 	// "1.2.3.4:56", "localhost:1234") and saves a new string with

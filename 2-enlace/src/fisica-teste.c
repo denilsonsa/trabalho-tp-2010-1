@@ -113,7 +113,7 @@ int main(int argc, char* argv[])
 	//printf("remote_host: %s\n", args.remote_host);
 	//printf("remote_port: %d\n", args.remote_port);
 
-	PS = P_Activate_Request(args.remote_port, args.remote_host, args.local_port);
+	PS = P_Activate_Request(NULL, args.remote_port, args.remote_host, args.local_port);
 	if( !PS )
 	{
 		printf("I'm really sorry to tell you that P_Activate_Request failed to activate your request.\n");

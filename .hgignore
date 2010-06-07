@@ -20,3 +20,6 @@ syntax: glob
 client-udp
 server-udp
 fisica-teste
+fisica-hub
+enlace-switch
+enlace-teste

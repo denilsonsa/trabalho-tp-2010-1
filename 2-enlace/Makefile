@@ -17,10 +17,10 @@ LIBS = -lm
 #  No need to change below this line  #
 #=====================================#
 
-PROGS = fisica-teste
+PROGS = fisica-hub fisica-teste
 
 LIBSRCS = lib/fisica.c lib/nbiocore.c lib/terminal.c lib/util.c
-PROGSRCS = src/fisica-teste.c
+PROGSRCS = src/fisica-hub.c src/fisica-teste.c
 
 LIBOBJS = $(LIBSRCS:.c=.o)
 PROGOBJS = $(PROGSRCS:.c=.o)
@@ -52,9 +52,19 @@ src/fisica-teste.o: src/fisica-teste.c \
 fisica-teste: src/fisica-teste.o \
 	lib/fisica.o lib/nbiocore.o lib/terminal.o lib/util.o
 
-	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
 
-# Done!
+src/fisica-hub.o: src/fisica-hub.c \
+	lib/fisica.h lib/nbiocore.h lib/terminal.h lib/util.h
+
+fisica-hub: src/fisica-hub.o \
+	lib/fisica.o lib/nbiocore.o lib/terminal.o lib/util.o
+
+
+############################################################
+# Pattern rule for all PROGS
+
+%: src/%.o
+	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
 
 
 #The variables:

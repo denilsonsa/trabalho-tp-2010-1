@@ -18,9 +18,10 @@ typedef struct physical_state
 } physical_state_t;
 
 physical_state_t* malloc_physical_state();
+void clear_physical_state(physical_state_t*);
 void free_physical_state(physical_state_t*);
 
-physical_state_t* P_Activate_Request(int, char*, int);
+physical_state_t* P_Activate_Request(physical_state_t*, int, const char*, int);
 void P_Deactivate_Request(physical_state_t*);
 void P_Data_Request(physical_state_t*, char);
 int P_Data_Indication(physical_state_t*);

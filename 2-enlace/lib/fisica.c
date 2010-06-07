@@ -49,18 +49,29 @@ void close_socket_fd(physical_state_t* PS)
 	PS->socket_fd = -1;
 }
 
+void clear_physical_state(physical_state_t* PS)
+{
+	// This function fills a physical_state_t struct with "NULL" data.
+	// Think about this function like a constructor, or an initializer
+	// (just like Python's __init__() function)
+	//
+	// This function must be called right after malloc() (which is done
+	// automatically by malloc_physical_state()), or before using a
+	// statically allocated version of this struct.
+
+	PS->remote_host = NULL;
+	PS->remote_port = 0;
+	PS->local_port = 0;
+	PS->socket_fd = -1;
+	PS->recv_buffer_has_data = 0;
+}
+
 physical_state_t* malloc_physical_state()
 {
 	physical_state_t* PS;
 	PS = malloc(sizeof(physical_state_t));
 	if(PS)
-	{
-		PS->remote_host = NULL;
-		PS->remote_port = 0;
-		PS->local_port = 0;
-		PS->socket_fd = -1;
-		PS->recv_buffer_has_data = 0;
-	}
+		clear_physical_state(PS);
 	return PS;
 }
 
@@ -138,22 +149,33 @@ void Pex_Receive_Callback(physical_state_t* PS)
 }
 
 
-physical_state_t* P_Activate_Request(int remote_port, char* host, int local_port)
+physical_state_t* P_Activate_Request(physical_state_t* PS, int remote_port, const char* host, int local_port)
 {
-	// Returns a new physical_state_t struct in success, or NULL in failure.
+	// If the PS parameter is passed, stores everything in that struct.
+	// If NULL is passed, then this function will malloc() a new
+	// physical_state_t struct and return that.
+	//
+	// This function will PS or the new struct in success, or NULL in failure.
 	//
 	// The "host" string is duplicated here, so the caller is free to
 	// modify and free it. This copy is automatically freed on free_physical_state().
 	//
 	// If the local_port is zero, then it will use the remote_port value instead.
 
-	physical_state_t* PS;
-	PS = malloc_physical_state();
-	if( ! PS )
-		return NULL;
+	int has_used_malloc = 0;
+
+	//printf("P_Activate_Request(%p, remote_port=%d, remote_host=%s, local_port=%d)\n", PS, remote_port, host, local_port);
+	if( PS == NULL )
+	{
+		PS = malloc_physical_state();
+		has_used_malloc = 1;
+		if( ! PS )
+			return NULL;
+	}
 
 	close_socket_fd(PS);
 	set_pointer((void*) &(PS->remote_host), strdup(host));
+	PS->recv_buffer_has_data = 0;
 	PS->remote_port = remote_port;
 	PS->local_port = local_port;
 
@@ -162,13 +184,15 @@ physical_state_t* P_Activate_Request(int remote_port, char* host, int local_port
 
 	if( ! fill_remote_addr_struct(PS) )
 	{
-		free_physical_state(PS);
+		if( has_used_malloc )
+			free_physical_state(PS);
 		return NULL;
 	}
 
 	if( ! fill_local_addr_struct(PS) )
 	{
-		free_physical_state(PS);
+		if( has_used_malloc )
+			free_physical_state(PS);
 		return NULL;
 	}
 
@@ -176,14 +200,16 @@ physical_state_t* P_Activate_Request(int remote_port, char* host, int local_port
 	//socket_fd = socket(PF_INET, SOCK_DGRAM|SOCK_NONBLOCK, IPPROTO_UDP);
 	if( PS->socket_fd < 0 )
 	{
-		free_physical_state(PS);
+		if( has_used_malloc )
+			free_physical_state(PS);
 		return NULL;
 	}
 
 	if( bind(PS->socket_fd, (struct sockaddr*) &(PS->local_addr), sizeof PS->local_addr) < 0 )
 	{
 		close_socket_fd(PS);
-		free_physical_state(PS);
+		if( has_used_malloc )
+			free_physical_state(PS);
 		return NULL;
 	}
 
