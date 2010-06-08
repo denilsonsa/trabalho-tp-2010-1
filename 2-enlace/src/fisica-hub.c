@@ -3,9 +3,6 @@
 #include <stdlib.h>
 // atoi(), exit()
 
-#include <unistd.h>
-// STDIN_FILENO, sleep()
-
 #include "fisica.h"
 
 #include "nbiocore.h"
@@ -41,7 +38,7 @@ void print_help()
 		"\n"
 		"Whenever data is received on any of the addresses, it will be replicated\n"
 		"(sent) to all other addresses, behaving just like a physical hub, or like a\n"
-		"broadcast transmission media."
+		"broadcast transmission media.\n"
 		"\n"
 		"If the remote host is empty, it is a shortcut for the loopback address:\n"
 		"  %s <local port> :<port>\n",

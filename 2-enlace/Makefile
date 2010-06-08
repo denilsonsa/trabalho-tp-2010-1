@@ -19,11 +19,11 @@ LIBS = -lm
 
 PROGS = \
 	fisica-teste fisica-hub \
-	enlace-teste
+	enlace-teste enlace-switch
 
 PROGSRCS = \
 	src/fisica-teste.c src/fisica-hub.c \
-	src/enlace-teste.c
+	src/enlace-teste.c src/enlace-switch.c
 
 LIBSRCS = lib/fisica.c lib/enlace.c \
 	lib/nbiocore.c lib/terminal.c lib/util.c
@@ -73,6 +73,13 @@ src/enlace-teste.o: src/enlace-teste.c \
 	lib/enlace.h lib/fisica.h lib/nbiocore.h lib/util.h
 
 enlace-teste: src/enlace-teste.o \
+	lib/enlace.o lib/fisica.o lib/nbiocore.o lib/util.o
+
+
+src/enlace-switch.o: src/enlace-switch.c \
+	lib/enlace.h lib/fisica.h lib/nbiocore.h lib/util.h
+
+enlace-switch: src/enlace-switch.o \
 	lib/enlace.o lib/fisica.o lib/nbiocore.o lib/util.o
 
 
