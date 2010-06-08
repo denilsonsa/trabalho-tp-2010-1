@@ -347,10 +347,13 @@ int L_Data_Receive(link_state_t* LS, link_address_t* src, link_address_t* dst, c
 	// src and dst are optional (pass NULL in that case).
 	//
 	// Returns the number of bytes stored in buf, or returns -1 in case of
-	// failure, or if buf_len is not long enough.
+	// failure, or if buf_len is not long enough, or if there is no frame available.
 
 	int i;
 	link_frame_header_t header;
+
+	if( ! LS->recv_buffer_has_frame == YES )
+		return -1;
 
 	parse_header(LS, &header);
 
