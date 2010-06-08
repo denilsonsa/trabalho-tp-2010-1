@@ -163,13 +163,24 @@ void read_from_network(int fd, void* void_conn)
 
 				dst_interface = switch_table[dst].interface;
 
-				printf("Redirecting from %c@%d to %c@%d.\n",
-					src, conn->interface_number,
-					dst, g_conn[dst_interface].interface_number);
+				if( dst_interface == conn->interface_number )
+				{
+					// Oops? Destination interface == Source interface?
+					// Okay, let me discard this.
+					printf("NOT redirecting from %c@%d to %c@%d.\n",
+						src, conn->interface_number,
+						dst, g_conn[dst_interface].interface_number);
+				}
+				else
+				{
+					printf("Redirecting from %c@%d to %c@%d.\n",
+						src, conn->interface_number,
+						dst, g_conn[dst_interface].interface_number);
 
-				// HACK: Let's fake our source address
-				g_conn[dst_interface].LS.local_addr = src;
-				L_Data_Request(&g_conn[dst_interface].LS, dst, buf, len);
+					// HACK: Let's fake our source address
+					g_conn[dst_interface].LS.local_addr = src;
+					L_Data_Request(&g_conn[dst_interface].LS, dst, buf, len);
+				}
 
 				should_broadcast = 0;
 			}
@@ -194,7 +205,6 @@ void read_from_network(int fd, void* void_conn)
 			}
 		}
 	}
-	//fflush(stdout);
 }
 
 
