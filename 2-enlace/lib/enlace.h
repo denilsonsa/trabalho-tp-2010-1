@@ -3,8 +3,6 @@
 
 #include "fisica.h"
 
-#define LINK_BUFFER_LEN 1024
-
 typedef unsigned char link_address_t;
 
 #define LINK_ADDRESS_BROADCAST ((link_address_t) '*')
@@ -14,6 +12,8 @@ enum has_frame_state_t {
 	HEADER_OK,
 	YES
 };
+
+#define LINK_BUFFER_LEN 1024
 
 // The data link layer struct
 typedef struct link_state

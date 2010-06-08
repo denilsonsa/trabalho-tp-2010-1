@@ -51,7 +51,7 @@ run/
   multiple "xterm" windows, one for each program instance.
 
 
-== Network-related files ==
+== Shared network-related files ==
 
 lib/fisica.*
   Implements a physical layer on top of UDP sockets.
@@ -60,7 +60,7 @@ lib/enlace.*
   Implements the link layer.
 
 
-== Auxiliar files ==
+== Shared auxiliar files ==
 
 lib/nbiocore.*
   Non-blocking I/O core. Makes it easier to use "select()" system call,
@@ -78,4 +78,4 @@ lib/util.*
   places.
 
 
-/* vi: set tw=72 spell spelllang=en: */
+/* vi: set tw=72: */

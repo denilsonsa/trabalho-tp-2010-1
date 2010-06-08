@@ -19,6 +19,13 @@ link_state_t* malloc_link_state()
 
 void clear_link_state(link_state_t* LS)
 {
+	// This function fills a link_state_t struct with "NULL" data.
+	// Think about this function like a constructor, or an initializer
+	// (just like Python's __init__() function)
+	//
+	// This function must be called right after malloc() (which is done
+	// automatically by malloc_link_state()), or before using a
+	// statically allocated version of this struct.
 	LS->local_addr = 0;
 	LS->PS = NULL;
 	LS->promiscuous = 0;

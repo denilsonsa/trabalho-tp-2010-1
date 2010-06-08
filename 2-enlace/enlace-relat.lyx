@@ -1,0 +1,1552 @@
+#LyX 1.6.5 created this file. For more info see http://www.lyx.org/
+\lyxformat 345
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\language brazilian
+\inputencoding auto
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize a4paper
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\cite_engine basic
+\use_bibtopic false
+\paperorientation portrait
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\author "" 
+\author "" 
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Trabalho 2 - Camada de Enlace
+\end_layout
+
+\begin_layout Author
+Denilson Figueiredo de Sá
+\end_layout
+
+\begin_layout Date
+2010-06-07
+\end_layout
+
+\begin_layout Section
+Introdução
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+% Fixing incorrect em-ulação hyphenation.
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+hyphenation{emu-la-ção}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+lstset{language=C}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Redes de computadores são estudadas e implementadas em um modelo de camadas,
+ de modo que a camada de baixo presta serviços para a camada de cima, e
+ cada camada tem responsabilidades distintas.
+ Neste segundo trabalho, o objetivo é emular a camada de enlace utilizando
+ os serviços oferecidos pela camada física, já implementados no trabalho
+ anterior.
+\end_layout
+
+\begin_layout Section
+Visão geral da camada de enlace
+\end_layout
+
+\begin_layout Standard
+A camada de enlace é responsável pelo envio de pacotes entre dois hosts
+ adjacentes.
+ Para que isso seja possível, esses dois hosts precisam estar conectados
+ diretamente através da camada física, conexão essa que pode ser ponto-a-ponto
+ ou broadcast, e pode ser por um meio guiado ou não-guiado.
+\end_layout
+
+\begin_layout Section
+Projeto da camada de enlace
+\end_layout
+
+\begin_layout Standard
+A parte mais importante no projeto e implementação desta camada foi definir
+ o protocolo de comunicação, as limitações e os serviços oferecidos.
+\end_layout
+
+\begin_layout Subsection
+Características gerais
+\end_layout
+
+\begin_layout Itemize
+Endereço de enlace (
+\emph on
+MAC
+\emph default
+) possuindo apenas 1 byte.
+\end_layout
+
+\begin_layout Itemize
+Endereço de broadcast é o caractere asterisco.
+\end_layout
+
+\begin_layout Itemize
+Detecção de erros tanto no cabeçalho quanto no payload.
+\end_layout
+
+\begin_layout Itemize
+Detecção de erros usando XOR.
+\end_layout
+
+\begin_layout Itemize
+Tamanho máximo de 255 bytes para o payload.
+\end_layout
+
+\begin_layout Itemize
+Possui um marcador de início-de-quadro e um marcador de final-de-quadro
+ (! e #, respectivamente).
+\end_layout
+
+\begin_layout Itemize
+Não há retransmissão.
+\end_layout
+
+\begin_layout Itemize
+Não há controle de acesso ao meio.
+\end_layout
+
+\begin_layout Itemize
+Não há controle de fluxo.
+\end_layout
+
+\begin_layout Standard
+Esta implementação da camada de enlace funciona sobre uma emulação de camada
+ física de maneira similar às redes Ethernet: cada enlace físico é ponto-a-ponto
+ (liga um host a outro host, ou um host a um comutador), mas o meio lógico
+ pode ser considerado broadcast.
+ Além disso, cada host tem seu próprio endereço de enlace.
+\end_layout
+
+\begin_layout Standard
+Por outro lado, devido às características do meio físico emulado, certas
+ funcionalidades do Ethernet (como retransmissões e controle de fluxo) foram
+ abandonadas em favor de uma implementação mais simples, mais próxima ao
+ protocolo PPP.
+\end_layout
+
+\begin_layout Standard
+Por motivos de simplificação do problema e simplificação da implementação,
+ o endereço de enlace possui apenas 1 byte (256 valores possíveis).
+ Para o escopo desta série de trabalhos, essa quantidade de endereços é
+ suficiente.
+\end_layout
+
+\begin_layout Standard
+Novamente por motivos de simplificação, o tamanho do payload foi limitado
+ em 255 bytes e a função XOR foi escolhida para o cálculo do checksum.
+ Aumentar o tamanho do payload e escolher uma função melhor para o checksum
+ seriam decisões bastante importantes para aumentar a eficiência e a confiabilid
+ade do protocolo, porém não acrescentam nenhum valor didático significativo
+ a este projeto.
+\end_layout
+
+\begin_layout Standard
+A escolha do caractere asterisco como endereço broadcast tem um simples
+ motivo prático: é muito mais fácil digitar caracteres presentes no teclado
+ do que digitar algum código que possa representar o caractere 255.
+ Como a escolha de um endereço broadcast é completamente arbitrária, foi
+ decidido simplificar a implementação e a interação com o usuário usando
+ um endereço fácil de digitar.
+\end_layout
+
+\begin_layout Standard
+Pensando em detectar prematuramente quadros inválidos, foi decidido usar
+ um checksum apenas para o payload e outro checksum apenas para o cabeçalho.
+ Desta forma, é possível identificar "lixo" após aproximadamente 8 bytes,
+ bastando calcular o checksum do cabeçalho, sem esperar o recebimento do
+ payload.
+\end_layout
+
+\begin_layout Standard
+Por fim, não é feito nenhum tratamento para o caso dos marcadores de início-de-q
+uadro e de fim-de-quadro aparecerem dentro do payload.
+ Nesta implementação, o marcador de início-de-quadro apenas sinaliza um
+ possível início de um quadro, cabendo ao par de checksums a verificação
+ dessa possibilidade.
+ O marcador de fim-de-quadro é redundante, pois, uma vez que o checksum
+ do cabeçalho seja verificado, o tamanho do payload é conhecido.
+\end_layout
+
+\begin_layout Subsection
+API (quase) orientada a objetos
+\end_layout
+
+\begin_layout Standard
+Para este trabalho, foi necessário aplicar uma mudança na API da camada
+ física, devido limitações existentes na API anterior.
+ Similarmente, a API proposta para a camada de enlace também sofreu o mesmo
+ tipo de mudança.
+\end_layout
+
+\begin_layout Standard
+Todas as funções de camada física recebem um ponteiro para um objeto 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+physical_state_t
+\end_layout
+
+\end_inset
+
+, o qual contém todo o estado da camada física emulada.
+ Analogamente, as funções da camada de enlace recebem um ponteiro para um
+ objeto 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+link_state_t
+\end_layout
+
+\end_inset
+
+.
+ Essa foi a mais importante mudança em relação à API originalmente proposta,
+ e permitiu que fossem implementados programas com múltiplas interfaces
+ emuladas, permitindo, portanto, a fácil implementação de um hub e de um
+ switch.
+\end_layout
+
+\begin_layout Standard
+Essa mudança segue a mesma convenção usada pelas funções de leitura/escrita
+ de arquivos da 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+stdio.h
+\end_layout
+
+\end_inset
+
+ e pode ser considerada como um tipo primitivo de orientação a objetos.
+\end_layout
+
+\begin_layout Subsection
+Estruturas de dados
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+physical_state_t
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+É uma estrutura que armazena todo o estado (contexto) de uma interface física
+ virtual.
+ Sempre que possível, a variável que aponta para essa estrutura chama-se
+ 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+PS
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+link_address_t
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Tipo de dado para o endereço de enlace.
+ É um 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+typedef
+\end_layout
+
+\end_inset
+
+ para um caractere.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+LINK_ADDRESS_BROADCAST
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+É uma constante para o endereço broadcast de enlace.
+ Atualmente definido como 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+'*'
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+link_state_t
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+É uma estrutura que armazena todo o estado (contexto) da camada de enlace
+ associada a uma interface física.
+ Sempre que possível, a variável que aponta para essa estrutura chama-se
+ 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+LS
+\end_layout
+
+\end_inset
+
+.
+ Dentro dessa estrutura há um ponteiro 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+PS
+\end_layout
+
+\end_inset
+
+ para 
+a 
+\lang brazilian
+
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+physical_state_t
+\end_layout
+
+\end_inset
+
+ associada a este enlace.
+\end_layout
+
+\begin_layout Subsection
+Funções da camada de enlace
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+link_state_t* L_Activate_Request(
+\end_layout
+
+\begin_layout Plain Layout
+
+    link_state_t*, link_address_t, physical_state_t*);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Inicializa a camada de enlace.
+ Pode receber um ponteiro para uma estrutura 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+link_state_t
+\end_layout
+
+\end_inset
+
+ previamente alocada, ou pode receber 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+NULL
+\end_layout
+
+\end_inset
+
+ para alocar uma nova estrutura.
+ Recebe também o endereço de enlace e um ponteiro para a 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+physical_state_t
+\end_layout
+
+\end_inset
+
+ associada a este enlace.
+\end_layout
+
+\begin_layout Standard
+Retorna um ponteiro para 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+link_state_t
+\end_layout
+
+\end_inset
+
+ em caso de sucesso, ou 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+NULL
+\end_layout
+
+\end_inset
+
+ em caso de falha.
+\end_layout
+
+\begin_layout Standard
+A API originalmente proposta para esta função recebia todos os parâmetros
+ da camada física.
+ Isto seria uma redundância, pois já existe uma função dedicada a realizar
+ inicializações da camada física, e portanto a API foi modificada para receber
+ uma estrutura já inicializada pela camada física.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+void L_Deactivate_Request(link_state_t*);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Desativa o enlace, mas não desativa a camada física.
+ Atualmente esta função não faz nada.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+void L_Data_Request(
+\end_layout
+
+\begin_layout Plain Layout
+
+    link_state_t*, link_address_t, const char*, int);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Requisita o envio de uma certa quantidade de bytes para um determinado endereço.
+ O envio é síncrono/bloqueante.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+int L_Data_Indication(link_state_t*);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Retorna 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+1
+\end_layout
+
+\end_inset
+
+ caso haja pelo menos um quadro disponível no buffer de leitura, retorna
+ 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+0
+\end_layout
+
+\end_inset
+
+ caso contrário.
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+int L_Data_Receive(
+\end_layout
+
+\begin_layout Plain Layout
+
+    link_state_t*, link_address_t*, link_address_t*, char*, int);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Retira o frame do buffer de leitura e armazena o payload no buffer passado
+ como parâmetro.
+ Opcionalmente também armazena os endereços fonte e destino.
+\end_layout
+
+\begin_layout Standard
+A API originalmente proposta não previa o retorno do endereço de destino
+ (afinal, na maior parte das vezes o destino será o próprio host).
+ Foi decidido retornar também o endereço de destino para que fosse possível
+ a implementação do comutador da camada de enlace.
+ Como bônus, esta mudança também tornou possível identificar frames broadcast.
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+void L_Set_Loss_Probability(link_state_t*, float);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Define a probabilidade (entre 0.0 e 1.0) de um quadro recebido com sucesso
+ ser descartado, com o objetivo de simular falhas na transmissão.
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+void L_Set_Promiscuous(link_state_t*, int);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Define se o enlace será promíscuo, ou seja, se todos os quadros serão disponibil
+izados para a aplicação ou se somente os quadros cujo destinatário é o próprio
+ host (ou broadcast).
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+void L_Receive_Callback(link_state_t*);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Função de callback que deve ser executada sempre que houver um byte disponível
+ para leitura.
+ Esta função realiza as seguintes etapas:
+\end_layout
+
+\begin_layout Itemize
+chama a função de callback da camada física (
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+P_Receive_Callback()
+\end_layout
+
+\end_inset
+
+);
+\end_layout
+
+\begin_layout Itemize
+copia para o buffer de enlace quaisquer bytes disponíveis na camada física;
+\end_layout
+
+\begin_layout Itemize
+chama a função 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+L_Analyze_Buffer()
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+void L_Analyze_Buffer(link_state_t*);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Esta função é apenas para uso interno, e não está exposta para a aplicação.
+\end_layout
+
+\begin_layout Standard
+Esta função implementa a parte de leitura do protocolo de enlace.
+ Ela detecta e descarta lixo (bytes soltos, fora de quadros), cabeçalhos
+ corrompidos e quadros corrompidos.
+ Caso encontre um quadro inteiro, disponibiliza esse quadro para o usuário
+ (através das funções citadas acima).
+\end_layout
+
+\begin_layout Section
+Implementação (emulação) da camada de enlace
+\end_layout
+
+\begin_layout Standard
+O código do projeto ficou dividido em três diretórios:
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\emph on
+lib/
+\emph default
+ contém o código-fonte compartilhado entre os programas.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\emph on
+src/
+\emph default
+ contém o código-fonte dos programas.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\emph on
+run/
+\emph default
+ contém scripts para execução rápida dos programas.
+\end_layout
+
+\begin_layout Standard
+Dentro do diretório 
+\emph on
+lib/
+\emph default
+ podemos encontrar os seguintes arquivos fonte (e seus cabeçalhos):
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\emph on
+fisica.c
+\emph default
+ contém toda a API da camada física, encapsulando o uso do UDP.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\emph on
+enlace.c
+\emph default
+ contém toda a API da camada de enlace, utilizando os serviços da camada
+ física.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\emph on
+nbiocore.c
+\emph default
+ módulo 
+\emph on
+Non-Blocking I/O Core
+\emph default
+, encapsulando o uso do 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+select()
+\end_layout
+
+\end_inset
+
+ para a leitura não-bloqueante (apesar do nome I/O, no momento este módulo
+ só trata a entrada).
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\emph on
+terminal.c
+\emph default
+ funções para alterar as flags do terminal para o modo não-canônico.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\emph on
+util.c
+\emph default
+ pequenas funções comuns a todos os outros arquivos.
+\end_layout
+
+\begin_layout Standard
+Dentro do diretório 
+\emph on
+src/
+\emph default
+ podemos encontrar os seguintes programas:
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\emph on
+fisica-teste.c
+\emph default
+ permite enviar e receber bytes diretamente pela camada física.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\emph on
+fisica-hub.c
+\emph default
+ implementação de um hub, simplesmente replica os bytes recebidos para todas
+ as outras interfaces.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\emph on
+enlace-teste.c
+\emph default
+ permite enviar e receber quadros pela camada de enlace.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\emph on
+enlace-switch.c
+\emph default
+ implementação de um switch, repassa os quadros apenas para a interface
+ à qual o endereço de destino está conectado.
+\end_layout
+
+\begin_layout Standard
+TODO: CONTINUE FROM HERE
+\end_layout
+
+\begin_layout Section
+Dificuldades encontradas
+\end_layout
+
+\begin_layout Subsection
+Extensões da API de emulação da camada física
+\end_layout
+
+\begin_layout Standard
+Todas as funções originais da API são precedidas por 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+P_
+\end_layout
+
+\end_inset
+
+.
+ Todas as funções extras, de extensão da API original, são precedidas por
+ 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+Pex_
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+void Pex_Set_Local_Port(int);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A descrição original da API de emulação da camada física possuía a limitação
+ de apenas receber uma porta na função de inicialização.
+ Por esse motivo, era impossível escutar numa porta e enviar dados para
+ outra porta, e portanto era impossível realizar a comunicação entre múltiplas
+ instâncias do programa na mesma máquina.
+\end_layout
+
+\begin_layout Standard
+Esta função foi escrita para solucionar essa limitação.
+ Esta função deve ser chamada antes da 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+P_Activate_Request()
+\end_layout
+
+\end_inset
+
+, indicando em qual a porta local o programa deve escutar por pacotes UDP.
+\end_layout
+
+\begin_layout Standard
+Se esta função não for chamada, ou se for chamada com parâmetro igual zero,
+ então o módulo da camada física vai assumir que a porta local e a porta
+ remota serão iguais, exatamente como previsto na API original.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+int Pex_Get_Socket_Fd(void);
+\end_layout
+
+\begin_layout Plain Layout
+
+void Pex_Receive_Callback(int);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Estas duas funções existem para permitir a integração do módulo de emulação
+ da camada física com o módulo de entrada e saída não-bloqueante.
+ A primeira destas funções retorna o 
+\emph on
+file descriptor
+\emph default
+ do socket UDP, necessário para o uso do 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+select()
+\end_layout
+
+\end_inset
+
+.
+ A segunda função é simplesmente um callback a ser executado quando houver
+ dados disponíveis no socket.
+\end_layout
+
+\begin_layout Subsection
+Non-Blocking I/O Core
+\end_layout
+
+\begin_layout Standard
+Este módulo foi desenvolvido para permitir o uso não-bloqueante da entrada
+ padrão e do socket.
+ Basicamente, este módulo encapsula a função 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+select()
+\end_layout
+
+\end_inset
+
+ numa API de fácil uso.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+void nbio_register(int, nbio_callback_t);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Registra um novo 
+\emph on
+file descriptor
+\emph default
+ e associa uma função a ser executada sempre que esse 
+\emph on
+file descriptor
+\emph default
+ estiver disponível para leitura.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+void nbio_unregister(int);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Esta função é o contrário da função anterior: faz um 
+\emph on
+file descriptor
+\emph default
+ não ser mais monitorado pelo 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+nbiocore
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+void nbio_register_idle(int, nbio_callback_t);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Define um limite de tempo que o 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+nbiocore
+\end_layout
+
+\end_inset
+
+ vai esperar até ter uma leitura disponível.
+ Caso nesse tempo nenhuma leitura fique disponível, a função aqui registrada
+ será chamada.
+ Por padrão, ele vai esperar um tempo infinito.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+void nbio_loop();
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Inicia o loop principal do 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+nbiocore
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+void nbio_stop_loop();
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Sinaliza a parada do loop principal.
+ Esta função deve ser chamada a partir de alguma função de callback.
+ Se esta função nunca for chamada, o loop principal nunca vai terminar.
+\end_layout
+
+\begin_layout Subsection
+Unbuffered standard input
+\end_layout
+
+\begin_layout Standard
+Como o objetivo deste trabalho é transmitir bytes individualmente, não faz
+ muito sentido ter um buffer de 
+\begin_inset Quotes eld
+\end_inset
+
+linha
+\begin_inset Quotes erd
+\end_inset
+
+ na entrada padrão.
+ Portanto, foram usadas funções da 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+termios.h
+\end_layout
+
+\end_inset
+
+ para mudar colocar terminal em modo 
+\emph on
+non-canonical
+\emph default
+.
+\end_layout
+
+\begin_layout Section
+Execução do programa fisica-teste
+\end_layout
+
+\begin_layout Subsection
+Compilação
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+lstset{language=bash}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A compilação é bastante simples, pois um Makefile está disponível.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+make
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Também é possível limpar os arquivos compilados usando:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+make clean
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Parâmetros de execução
+\end_layout
+
+\begin_layout Standard
+O programa 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+fisica-teste
+\end_layout
+
+\end_inset
+
+ aceita os seguintes parâmetros:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./fisica-teste [local_port] [remote_host]:remote_port
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+local_port é a porta local na qual o programa vai escutar por pacotes UDP.
+ Este parâmetro é opcional, caso omitido, é assumido que a porta local será
+ igual à porta remota.
+\end_layout
+
+\begin_layout Description
+remote_host é o endereço IP do host com o qual o programa tentará se comunicar.
+ Caso omitido, é assumido o endereço 
+\emph on
+loopback
+\emph default
+ (127.0.0.1).
+\end_layout
+
+\begin_layout Description
+remote_port é a porta usada para comunicação com o host remoto.
+ Também será a porta local, caso esta tenha sido omitida na linha de comando.
+\end_layout
+
+\begin_layout Subsection
+Exemplo de execução
+\end_layout
+
+\begin_layout Standard
+Digite cada um dos comandos a seguir em terminais diferentes na mesma máquina.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+./fisica-teste 1235 :1234
+\end_layout
+
+\begin_layout Plain Layout
+
+./fisica-teste 1234 :1235
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A partir de então, cada byte digitado em um programa será enviado através
+ de pacotes UDP para o outro programa.
+\end_layout
+
+\begin_layout Standard
+A combinação 
+\emph on
+Ctrl+D
+\emph default
+ envia um caractere que sinaliza o fim da transmissão, e encerra o programa.
+\end_layout
+
+\begin_layout Section
+Conclusões
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+lstset{language=C}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+O trabalho foi implementado usando variáveis globais para armazenar o estado
+ dos diversos módulos (em especial, do módulo de emulação da camada física).
+ Embora seja uma solução simples, não é 
+\emph on
+thread-safe
+\emph default
+ e não permite o uso de múltiplas interfaces físicas simultaneamente.
+ Por outro lado, não há outra forma de implementar esse módulo e manter
+ a API original.
+\end_layout
+
+\begin_layout Standard
+Uma possível melhoria futura é alterar a API para inserir conceitos de orientaçã
+o a objetos.
+ Não é necessário usar uma linguagem OO para isso, basta a inicialização
+ retornar uma 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+struct
+\end_layout
+
+\end_inset
+
+, e todas as outras funções passarem a operar em cima dessa 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+struct
+\end_layout
+
+\end_inset
+
+, de maneira similar à forma como funciona a API de leitura e escrita de
+ arquivos (
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+stdio.h
+\end_layout
+
+\end_inset
+
+) e a API de sockets.
+\end_layout
+
+\begin_layout Standard
+Uma vez que a API seja modificada para suportar múltiplas interfaces da
+ camada física, podemos criar um programa que funcionará como 
+\emph on
+hub
+\emph default
+ virtual, replicando um pacote recebido para todas as outras 
+\begin_inset Quotes eld
+\end_inset
+
+portas
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Embora não seja possível simular uma colisão na nossa camada física emulada,
+ essa ferramenta irá permitir a simulação e o estudo de topologias de rede
+ 
+\emph on
+broadcast
+\emph default
+, ou de meio físico compartilhado.
+\end_layout
+
+\begin_layout Section
+Referências Bibliográficas
+\end_layout
+
+\begin_layout Standard
+Todos as referências a respeito do código estão incluídas dentro do próprio
+ código-fonte, na forma de comentários.
+ Além disso, as manpages do Linux foram amplamente consultadas.
+\end_layout
+
+\end_body
+\end_document

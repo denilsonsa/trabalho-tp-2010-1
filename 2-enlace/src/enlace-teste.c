@@ -39,7 +39,10 @@ void print_help()
 		"  %s <local link address> <local port> <remote host>:<port>\n"
 		"If the remote host is empty, it is a shortcut for the loopback address:\n"
 		"  %s <local link address> <local port> :<port>\n"
-		"The local link address is just one character.\n",
+		"The local link address is just one character.\n"
+		"\n"
+		"After the program is running, each input line is a frame. The first character\n"
+		"of each line is considered the destination address.",
 		g_program_name,
 		g_program_name,
 		g_program_name 
