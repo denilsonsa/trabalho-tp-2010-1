@@ -74,6 +74,13 @@ status open
 hyphenation{emu-la-ção}
 \end_layout
 
+\begin_layout Plain Layout
+
+
+\backslash
+hyphenation{des-ne-ces-sá-ria}
+\end_layout
+
 \end_inset
 
 
@@ -465,12 +472,12 @@ status open
 
 \begin_layout Plain Layout
 
-link_state_t* L_Activate_Request(
+link_state_t* L_Activate_Request(link_state_t*,
 \end_layout
 
 \begin_layout Plain Layout
 
-    link_state_t*, link_address_t, physical_state_t*);
+    link_address_t, physical_state_t*);
 \end_layout
 
 \end_inset
@@ -583,12 +590,12 @@ status open
 
 \begin_layout Plain Layout
 
-void L_Data_Request(
+void L_Data_Request(link_state_t*,
 \end_layout
 
 \begin_layout Plain Layout
 
-    link_state_t*, link_address_t, const char*, int);
+    link_address_t, const char*, int);
 \end_layout
 
 \end_inset
@@ -649,12 +656,12 @@ status open
 
 \begin_layout Plain Layout
 
-int L_Data_Receive(
+int L_Data_Receive(link_state_t*,
 \end_layout
 
 \begin_layout Plain Layout
 
-    link_state_t*, link_address_t*, link_address_t*, char*, int);
+    link_address_t*, link_address_t*, char*, int);
 \end_layout
 
 \end_inset
@@ -663,7 +670,7 @@ int L_Data_Receive(
 \end_layout
 
 \begin_layout Standard
-Retira o frame do buffer de leitura e armazena o payload no buffer passado
+Retira o quadro do buffer de leitura e armazena o payload no buffer passado
  como parâmetro.
  Opcionalmente também armazena os endereços fonte e destino.
 \end_layout
@@ -673,7 +680,7 @@ A API originalmente proposta não previa o retorno do endereço de destino
  (afinal, na maior parte das vezes o destino será o próprio host).
  Foi decidido retornar também o endereço de destino para que fosse possível
  a implementação do comutador da camada de enlace.
- Como bônus, esta mudança também tornou possível identificar frames broadcast.
+ Como bônus, esta mudança também tornou possível identificar quadros broadcast.
 \begin_inset listings
 inline false
 status open
@@ -793,7 +800,7 @@ Esta função implementa a parte de leitura do protocolo de enlace.
 \end_layout
 
 \begin_layout Section
-Implementação (emulação) da camada de enlace
+Implementação da camada de enlace
 \end_layout
 
 \begin_layout Standard
@@ -942,10 +949,19 @@ enlace-switch.c
 \emph default
  implementação de um switch, repassa os quadros apenas para a interface
  à qual o endereço de destino está conectado.
+ O tempo de expiração do cache é definido pela constante 
+\begin_inset listings
+inline true
+status open
+
+\begin_layout Plain Layout
+
+CACHE_EXPIRE
 \end_layout
 
-\begin_layout Standard
-TODO: CONTINUE FROM HERE
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Section
@@ -953,335 +969,72 @@ Dificuldades encontradas
 \end_layout
 
 \begin_layout Subsection
-Extensões da API de emulação da camada física
+Limitações da API proposta
 \end_layout
 
 \begin_layout Standard
-Todas as funções originais da API são precedidas por 
-\begin_inset listings
-inline true
-status open
-
-\begin_layout Plain Layout
-
-P_
+Como citado no trabalho anterior, e como já mencionado em bastantes detalhes
+ neste relatório, a API proposta originalmente possuía diversas limitações.
+ A fim de contornar tais limitações e tornar possível a execução deste trabalho,
+ a proposta original foi modificada, e as mudanças estão descritas neste
+ relatório.
 \end_layout
 
-\end_inset
+\begin_layout Subsection
+Execução automatizada dos programas
+\end_layout
 
-.
- Todas as funções extras, de extensão da API original, são precedidas por
+\begin_layout Standard
+Rodar cada programa manualmente era possível (embora um pouco inconveniente)
+ quando tínhamos apenas duas instâncias simultâneas.
+ Porém, com o crescimento da complexidade, com a implementação de hub e
+ switch, e com o aumento da quantidade de instâncias rodadas simultaneamente,
+ a execução manual torna-se inviável.
+\end_layout
+
+\begin_layout Standard
+Para solucionar esse problema, foram criados alguns scripts dentro do diretório
  
-\begin_inset listings
-inline true
-status open
-
-\begin_layout Plain Layout
-
-Pex_
-\end_layout
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-inline false
-status open
-
-\begin_layout Plain Layout
-
-void Pex_Set_Local_Port(int);
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-A descrição original da API de emulação da camada física possuía a limitação
- de apenas receber uma porta na função de inicialização.
- Por esse motivo, era impossível escutar numa porta e enviar dados para
- outra porta, e portanto era impossível realizar a comunicação entre múltiplas
- instâncias do programa na mesma máquina.
-\end_layout
-
-\begin_layout Standard
-Esta função foi escrita para solucionar essa limitação.
- Esta função deve ser chamada antes da 
-\begin_inset listings
-inline true
-status open
-
-\begin_layout Plain Layout
-
-P_Activate_Request()
-\end_layout
-
-\end_inset
-
-, indicando em qual a porta local o programa deve escutar por pacotes UDP.
-\end_layout
-
-\begin_layout Standard
-Se esta função não for chamada, ou se for chamada com parâmetro igual zero,
- então o módulo da camada física vai assumir que a porta local e a porta
- remota serão iguais, exatamente como previsto na API original.
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-inline false
-status open
-
-\begin_layout Plain Layout
-
-int Pex_Get_Socket_Fd(void);
-\end_layout
-
-\begin_layout Plain Layout
-
-void Pex_Receive_Callback(int);
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Estas duas funções existem para permitir a integração do módulo de emulação
- da camada física com o módulo de entrada e saída não-bloqueante.
- A primeira destas funções retorna o 
 \emph on
-file descriptor
+run/
 \emph default
- do socket UDP, necessário para o uso do 
-\begin_inset listings
-inline true
-status open
-
-\begin_layout Plain Layout
-
-select()
-\end_layout
-
-\end_inset
-
 .
- A segunda função é simplesmente um callback a ser executado quando houver
- dados disponíveis no socket.
+ Esses scripts executam diversas instâncias dos programas, cada uma com
+ seus devidos parâmetros de execução, em diferentes terminais.
+ Isso tornou possível rodar testes com um número arbitrário de instâncias
+ simultâneas.
+ O máximo de trabalho manual é organizar as várias janelas abertas de modo
+ que seja possível visualizar todas simultaneamente.
 \end_layout
 
 \begin_layout Subsection
-Non-Blocking I/O Core
+Mainloop
 \end_layout
 
 \begin_layout Standard
-Este módulo foi desenvolvido para permitir o uso não-bloqueante da entrada
- padrão e do socket.
- Basicamente, este módulo encapsula a função 
+A proposta original da API de enlace previa uma função 
 \begin_inset listings
 inline true
 status open
 
 \begin_layout Plain Layout
 
-select()
-\end_layout
-
-\end_inset
-
- numa API de fácil uso.
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-inline false
-status open
-
-\begin_layout Plain Layout
-
-void nbio_register(int, nbio_callback_t);
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Registra um novo 
-\emph on
-file descriptor
-\emph default
- e associa uma função a ser executada sempre que esse 
-\emph on
-file descriptor
-\emph default
- estiver disponível para leitura.
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-inline false
-status open
-
-\begin_layout Plain Layout
-
-void nbio_unregister(int);
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Esta função é o contrário da função anterior: faz um 
-\emph on
-file descriptor
-\emph default
- não ser mais monitorado pelo 
-\begin_inset listings
-inline true
-status open
-
-\begin_layout Plain Layout
-
-nbiocore
+void L_MainLoop(void)
 \end_layout
 
 \end_inset
 
 .
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-inline false
-status open
-
-\begin_layout Plain Layout
-
-void nbio_register_idle(int, nbio_callback_t);
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Define um limite de tempo que o 
-\begin_inset listings
-inline true
-status open
-
-\begin_layout Plain Layout
-
-nbiocore
-\end_layout
-
-\end_inset
-
- vai esperar até ter uma leitura disponível.
- Caso nesse tempo nenhuma leitura fique disponível, a função aqui registrada
- será chamada.
- Por padrão, ele vai esperar um tempo infinito.
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-inline false
-status open
-
-\begin_layout Plain Layout
-
-void nbio_loop();
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Inicia o loop principal do 
-\begin_inset listings
-inline true
-status open
-
-\begin_layout Plain Layout
-
-nbiocore
-\end_layout
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-inline false
-status open
-
-\begin_layout Plain Layout
-
-void nbio_stop_loop();
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Sinaliza a parada do loop principal.
- Esta função deve ser chamada a partir de alguma função de callback.
- Se esta função nunca for chamada, o loop principal nunca vai terminar.
-\end_layout
-
-\begin_layout Subsection
-Unbuffered standard input
-\end_layout
-
-\begin_layout Standard
-Como o objetivo deste trabalho é transmitir bytes individualmente, não faz
- muito sentido ter um buffer de 
-\begin_inset Quotes eld
-\end_inset
-
-linha
-\begin_inset Quotes erd
-\end_inset
-
- na entrada padrão.
- Portanto, foram usadas funções da 
-\begin_inset listings
-inline true
-status open
-
-\begin_layout Plain Layout
-
-termios.h
-\end_layout
-
-\end_inset
-
- para mudar colocar terminal em modo 
+ Devido ao uso do módulo 
 \emph on
-non-canonical
+nbiocore
 \emph default
-.
+, essa função tornou-se completamente desnecessária, e nem sequer foi implementa
+da (as atribuições dessa função foram implementadas na função de callback).
 \end_layout
 
 \begin_layout Section
-Execução do programa fisica-teste
+Compilação e execução
 \end_layout
 
 \begin_layout Subsection
@@ -1305,7 +1058,7 @@ lstset{language=bash}
 \end_layout
 
 \begin_layout Standard
-A compilação é bastante simples, pois um Makefile está disponível.
+A compilação é bastante simples:
 \end_layout
 
 \begin_layout Standard
@@ -1343,99 +1096,36 @@ make clean
 \end_layout
 
 \begin_layout Subsection
-Parâmetros de execução
+Execução
 \end_layout
 
 \begin_layout Standard
-O programa 
-\begin_inset listings
-inline true
-status open
-
-\begin_layout Plain Layout
-
-fisica-teste
-\end_layout
-
-\end_inset
-
- aceita os seguintes parâmetros:
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-inline false
-status open
-
-\begin_layout Plain Layout
-
-./fisica-teste [local_port] [remote_host]:remote_port
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Description
-local_port é a porta local na qual o programa vai escutar por pacotes UDP.
- Este parâmetro é opcional, caso omitido, é assumido que a porta local será
- igual à porta remota.
-\end_layout
-
-\begin_layout Description
-remote_host é o endereço IP do host com o qual o programa tentará se comunicar.
- Caso omitido, é assumido o endereço 
+Cada programa será compilado no diretório raiz deste projeto (no mesmo diretório
+ do 
 \emph on
-loopback
+Makefile
 \emph default
- (127.0.0.1).
-\end_layout
-
-\begin_layout Description
-remote_port é a porta usada para comunicação com o host remoto.
- Também será a porta local, caso esta tenha sido omitida na linha de comando.
-\end_layout
-
-\begin_layout Subsection
-Exemplo de execução
+).
+ Cada programa possui um pequeno texto de ajuda embutido, descrevendo de
+ maneira resumida quais parâmetros ele espera receber.
 \end_layout
 
 \begin_layout Standard
-Digite cada um dos comandos a seguir em terminais diferentes na mesma máquina.
+Para todos os programas, a ideia básica é a mesma: a porta local de uma
+ instância deve estar associada à porta remota de outra.
+ Quando isto acontece, então essas instâncias estão virtualmente conectadas
+ e podem se comunicar.
 \end_layout
 
 \begin_layout Standard
-\begin_inset listings
-inline false
-status open
-
-\begin_layout Plain Layout
-
-./fisica-teste 1235 :1234
-\end_layout
-
-\begin_layout Plain Layout
-
-./fisica-teste 1234 :1235
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-A partir de então, cada byte digitado em um programa será enviado através
- de pacotes UDP para o outro programa.
-\end_layout
-
-\begin_layout Standard
-A combinação 
+Para simplificar a execução, existem vários scripts dentro do diretório
+ 
 \emph on
-Ctrl+D
+run/
 \emph default
- envia um caractere que sinaliza o fim da transmissão, e encerra o programa.
+, e em geral é mais fácil rodar esses scripts do que executar o programa
+ manualmente.
+ Também é bastante fácil criar novos scripts para novos casos de teste.
 \end_layout
 
 \begin_layout Section
@@ -1443,99 +1133,20 @@ Conclusões
 \end_layout
 
 \begin_layout Standard
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-lstset{language=C}
-\end_layout
-
-\end_inset
-
-
+Com as mudanças na API, a implementação das camadas física e de enlace tornou-se
+ bastante robusta e fácil de usar.
+ O módulo de I/O não-bloqueante também mostrou-se extremamente valioso,
+ mantendo o código simples de escrever e o uso de CPU mínimo.
+ Juntando todos os módulos desenvolvidos durante o projeto, implementar
+ um hub de camada física e um switch de camada de enlace foi uma tarefa
+ bastante simples, rápida e agradável.
 \end_layout
 
 \begin_layout Standard
-O trabalho foi implementado usando variáveis globais para armazenar o estado
- dos diversos módulos (em especial, do módulo de emulação da camada física).
- Embora seja uma solução simples, não é 
-\emph on
-thread-safe
-\emph default
- e não permite o uso de múltiplas interfaces físicas simultaneamente.
- Por outro lado, não há outra forma de implementar esse módulo e manter
- a API original.
-\end_layout
-
-\begin_layout Standard
-Uma possível melhoria futura é alterar a API para inserir conceitos de orientaçã
-o a objetos.
- Não é necessário usar uma linguagem OO para isso, basta a inicialização
- retornar uma 
-\begin_inset listings
-inline true
-status open
-
-\begin_layout Plain Layout
-
-struct
-\end_layout
-
-\end_inset
-
-, e todas as outras funções passarem a operar em cima dessa 
-\begin_inset listings
-inline true
-status open
-
-\begin_layout Plain Layout
-
-struct
-\end_layout
-
-\end_inset
-
-, de maneira similar à forma como funciona a API de leitura e escrita de
- arquivos (
-\begin_inset listings
-inline true
-status open
-
-\begin_layout Plain Layout
-
-stdio.h
-\end_layout
-
-\end_inset
-
-) e a API de sockets.
-\end_layout
-
-\begin_layout Standard
-Uma vez que a API seja modificada para suportar múltiplas interfaces da
- camada física, podemos criar um programa que funcionará como 
-\emph on
-hub
-\emph default
- virtual, replicando um pacote recebido para todas as outras 
-\begin_inset Quotes eld
-\end_inset
-
-portas
-\begin_inset Quotes erd
-\end_inset
-
-.
- Embora não seja possível simular uma colisão na nossa camada física emulada,
- essa ferramenta irá permitir a simulação e o estudo de topologias de rede
- 
-\emph on
-broadcast
-\emph default
-, ou de meio físico compartilhado.
+Uma possível melhora para trabalhos futuros é manter um único idioma em
+ todo o código.
+ A API proposta possui nomes em inglês, porém os arquivos precisam ter nomes
+ em português.
 \end_layout
 
 \begin_layout Section
