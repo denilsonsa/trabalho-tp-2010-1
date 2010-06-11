@@ -300,16 +300,12 @@ void L_Receive_Callback(link_state_t* LS)
 	// Runs the physical layer callback,
 	// and then gets the byte from the physical layer into the link layer.
 
-	printf("L_Receive_Callback(fd=%d)\n", LS->PS->socket_fd);
-
 	P_Receive_Callback(LS->PS);
 
 	while( P_Data_Indication(LS->PS) )
 	{
 		char c;
 		int next_pos = (LS->recv_buffer_end + 1) % LINK_BUFFER_LEN;
-
-		printf("-> L_Receive_Callback(): next_pos = %d\n", next_pos);
 
 		// Check if the buffer is full
 		if( next_pos == LS->recv_buffer_begin )

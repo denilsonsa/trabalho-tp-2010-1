@@ -8,6 +8,9 @@
 #include <stdlib.h>
 // NULL, malloc(), free()
 
+#include <stdio.h>
+// perror()
+
 #include <unistd.h>
 // close()
 
@@ -139,21 +142,14 @@ void P_Receive_Callback(physical_state_t* PS)
 	socklen_t src_addr_len;
 	int bytes_received;
 
-	// FIXME BUG: bytes_received is -1
-	// Why?!
+	src_addr_len = sizeof(src_addr);
+
 	bytes_received = recvfrom(PS->socket_fd,
 		PS->recv_buffer, sizeof(PS->recv_buffer), 0,
 		(struct sockaddr*) &src_addr, &src_addr_len);
 
-	printf("P_Receive_Callback(fd=%d): bytes_received=%d size=%d buf[0]=%c\n",
-		PS->socket_fd,
-		bytes_received,
-		sizeof(PS->recv_buffer),
-		PS->recv_buffer[0]
-		);
-
 	if( bytes_received == -1 )
-		perror("perror(): ");
+		perror("P_Receive_Callback()");
 
 	if( bytes_received > 0 )
 		PS->recv_buffer_has_data = 1;
