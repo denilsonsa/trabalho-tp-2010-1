@@ -11,7 +11,7 @@ CXXFLAGS = $(CFLAGS)
 LDFLAGS  =
 LIBS = -lm
 
-#DEBUGFLAGS = -g -ggdb
+DEBUGFLAGS = -g -ggdb
 
 #=====================================#
 #  No need to change below this line  #

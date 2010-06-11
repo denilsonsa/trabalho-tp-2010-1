@@ -135,7 +135,12 @@ void read_from_network(int fd, void* void_conn)
 	conn = (struct virtual_connection*) void_conn;
 
 	L_Receive_Callback(&conn->LS);
-	//printf("read_from_network(%d, %p);\n", fd, void_conn);
+	printf("read_from_network(fd=%d); has_frame=%d buf[%d:%d]\n",
+		fd,
+		conn->LS.recv_buffer_has_frame,
+		conn->LS.recv_buffer_begin,
+		conn->LS.recv_buffer_end
+		);
 
 	while( L_Data_Indication(&conn->LS) )
 	{
@@ -148,6 +153,15 @@ void read_from_network(int fd, void* void_conn)
 
 		len = L_Data_Receive(&conn->LS, &src, &dst, buf, 512);
 		now = time(0);
+
+		printf("-> read_from_network(fd=%d); has_frame=%d buf[%d:%d] src=%c dst=%c\n",
+			fd,
+			conn->LS.recv_buffer_has_frame,
+			conn->LS.recv_buffer_begin,
+			conn->LS.recv_buffer_end,
+			src,
+			dst
+			);
 
 		// Adding the source address to the table.
 		switch_table[src].interface = conn->interface_number;
